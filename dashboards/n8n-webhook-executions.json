@@ -60,7 +60,7 @@
       "title": "HTTP Requests by Webhook Path \u2014 Success vs Failed",
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 4,
         "w": 24,
         "h": 10
       },
@@ -110,7 +110,7 @@
       "title": "Total Executions",
       "gridPos": {
         "x": 0,
-        "y": 10,
+        "y": 0,
         "w": 5,
         "h": 4
       },
@@ -158,7 +158,7 @@
       "title": "Successful Executions",
       "gridPos": {
         "x": 5,
-        "y": 10,
+        "y": 0,
         "w": 5,
         "h": 4
       },
@@ -207,7 +207,7 @@
       "title": "Failed Executions",
       "gridPos": {
         "x": 10,
-        "y": 10,
+        "y": 0,
         "w": 5,
         "h": 4
       },
@@ -256,7 +256,7 @@
       "title": "Success Rate",
       "gridPos": {
         "x": 15,
-        "y": 10,
+        "y": 0,
         "w": 5,
         "h": 4
       },
@@ -314,7 +314,7 @@
       "title": "Current Requests / min",
       "gridPos": {
         "x": 20,
-        "y": 10,
+        "y": 0,
         "w": 4,
         "h": 4
       },
