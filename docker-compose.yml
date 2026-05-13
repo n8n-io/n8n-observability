@@ -20,9 +20,11 @@ services:
     container_name: n8n-grafana
     ports:
       - "3000:3000"
+    entrypoint: ["/bin/sh", "/usr/local/bin/n8n-grafana-entrypoint.sh"]
     volumes:
       - n8n_grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning-src:ro
+      - ./grafana/entrypoint.sh:/usr/local/bin/n8n-grafana-entrypoint.sh:ro
       - ./dashboards:/etc/grafana/dashboards:ro
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -30,7 +32,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_UNIFIED_ALERTING_ENABLED=true
       - GF_ALERTING_ENABLED=false
-      - GRAFANA_SLACK_TOKEN=${GRAFANA_SLACK_TOKEN}
+      - GRAFANA_SLACK_TOKEN=${GRAFANA_SLACK_TOKEN:-}
     depends_on:
       - prometheus
     restart: unless-stopped
