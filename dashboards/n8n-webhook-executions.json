@@ -369,10 +369,10 @@
       "type": "timeseries",
       "title": "Execution Duration \u2014 p50 / p90 / p99",
       "gridPos": {
-        "x": 0,
+        "x": 8,
         "y": 14,
-        "w": 24,
-        "h": 8
+        "w": 16,
+        "h": 10
       },
       "datasource": {
         "type": "prometheus",
@@ -425,8 +425,8 @@
       "title": "Top Workflows",
       "gridPos": {
         "x": 0,
-        "y": 22,
-        "w": 24,
+        "y": 14,
+        "w": 8,
         "h": 10
       },
       "datasource": {
@@ -513,7 +513,7 @@
       "title": "Average Execution Time per Webhook URL",
       "gridPos": {
         "x": 0,
-        "y": 32,
+        "y": 24,
         "w": 24,
         "h": 9
       },
