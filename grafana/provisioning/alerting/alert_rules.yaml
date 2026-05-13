@@ -1,0 +1,90 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: n8n-webhook-alerts
+    folder: n8n
+    interval: 30s
+    rules:
+      - uid: n8n-webhook-error-burst
+        title: "n8n Webhook Execution Error Burst"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: >
+                sum by (workflow_id) (
+                  increase(
+                    n8n_workflow_execution_duration_seconds_count{mode="webhook",status="failed"}[30s]
+                  )
+                )
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: "__expr__"
+            model:
+              type: reduce
+              refId: B
+              datasource:
+                type: __expr__
+                uid: __expr__
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              reducer: last
+              expression: A
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              refId: C
+              datasource:
+                type: __expr__
+                uid: __expr__
+              conditions:
+                - evaluator:
+                    params:
+                      - 5
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              expression: B
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Webhook error burst on workflow {{ $labels.workflow_id }}"
+          description: >
+            Workflow {{ $labels.workflow_id }} has {{ printf "%.0f" $values.A.Value }}
+            failed executions in the last 30 seconds (threshold: 5).
+        labels:
+          severity: warning

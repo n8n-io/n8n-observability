@@ -28,6 +28,9 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_ALERTING_ENABLED=false
+      - GRAFANA_SLACK_TOKEN=${GRAFANA_SLACK_TOKEN}
     depends_on:
       - prometheus
     restart: unless-stopped

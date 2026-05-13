@@ -1,0 +1,21 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: n8n-webhook-errors-slack
+    receivers:
+      - uid: slack-n8n-webhook-errors
+        type: slack
+        settings:
+          token: ${GRAFANA_SLACK_TOKEN}
+          recipient: "C09UBTEU8DP"
+          title: |
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+          text: |
+            {{ range .Alerts }}
+            *Workflow ID:* `{{ .Labels.workflow_id }}`
+            *Errors in last 30s:* {{ printf "%.0f" .Values.A }}
+            *Status:* {{ .Status | toUpper }}
+            *Dashboard:* <http://localhost:3000/d/n8n-webhook-executions/n8n-webhook-executions|n8n Webhook Executions>
+            {{ end }}
+        disableResolveMessage: false

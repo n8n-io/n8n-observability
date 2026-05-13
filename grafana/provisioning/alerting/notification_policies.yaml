@@ -1,0 +1,11 @@
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: n8n-webhook-errors-slack
+    group_by:
+      - alertname
+      - workflow_id
+    group_wait: 10s
+    group_interval: 5m
+    repeat_interval: 1h
