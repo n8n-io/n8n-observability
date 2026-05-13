@@ -56,12 +56,12 @@
   "panels": [
     {
       "id": 7,
-      "type": "timeseries",
+      "type": "barchart",
       "title": "HTTP Requests by Webhook Path \u2014 Success vs Failed",
       "gridPos": {
-        "x": 0,
+        "x": 16,
         "y": 4,
-        "w": 24,
+        "w": 8,
         "h": 10
       },
       "datasource": {
@@ -71,6 +71,126 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "axisPlacement": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "stacking": "normal",
+        "showValue": "auto",
+        "xTickLabelRotation": 0,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "label_join(sum by (workflow_id, workflow_name, method, webhook_path) (increase(n8n_webhook_request_duration_seconds_count{status_code=~\"[23]..\"}[$__range]) * on(workflow_id) group_left(workflow_name) max by (workflow_id, workflow_name) (n8n_workflow_info{workflow_name=~\"$workflow_name\"})), \"endpoint\", \"\", \"workflow_name\")",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "legendFormat": "Success"
+        },
+        {
+          "refId": "B",
+          "expr": "label_join(sum by (workflow_id, workflow_name, method, webhook_path) (increase(n8n_webhook_request_duration_seconds_count{status_code=~\"[45]..\"}[$__range]) * on(workflow_id) group_left(workflow_name) max by (workflow_id, workflow_name) (n8n_workflow_info{workflow_name=~\"$workflow_name\"})), \"endpoint\", \"\", \"workflow_name\")",
+          "instant": true,
+          "range": false,
+          "format": "table",
+          "legendFormat": "Failed"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "workflow_id": true,
+              "workflow_name": true,
+              "method": true,
+              "webhook_path": true
+            },
+            "renameByName": {
+              "Value #A": "Success",
+              "Value #B": "Failed",
+              "endpoint": "Endpoint"
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "HTTP Requests by Webhook Path — Over Time",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 16,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
           "min": 0,
           "custom": {
             "lineWidth": 2,
@@ -101,13 +221,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (workflow_id, workflow_name, method, webhook_path) (increase(n8n_webhook_request_duration_seconds_count{status_code=~\"[23]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) max by (workflow_id, workflow_name) (n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
-          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} \u2014 success"
-        },
-        {
-          "refId": "B",
-          "expr": "sum by (workflow_id, workflow_name, method, webhook_path) (increase(n8n_webhook_request_duration_seconds_count{status_code=~\"[45]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) max by (workflow_id, workflow_name) (n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
-          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} \u2014 failed"
+          "expr": "sum by (workflow_id, workflow_name, method, webhook_path) (rate(n8n_webhook_request_duration_seconds_count[$__rate_interval]) * on(workflow_id) group_left(workflow_name) max by (workflow_id, workflow_name) (n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}}"
         }
       ]
     },
