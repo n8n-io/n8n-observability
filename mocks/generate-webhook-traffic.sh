@@ -17,8 +17,10 @@ set -euo pipefail
 # Configuration — add or remove webhook URLs here
 # ---------------------------------------------------------------------------
 WEBHOOK_URLS=(
-  "http://localhost:5678/webhook/098ad453-5b09-4c2c-bc3c-6fae90939ae9",
+  "http://localhost:5678/webhook/098ad453-5b09-4c2c-bc3c-6fae90939ae9"
   "http://localhost:5678/webhook/294febd8-8e32-42f3-8fb3-b6a9f88cd915"
+  "http://localhost:5678/webhook/a5af11f1-6216-4afb-bd99-7641cd431108"
+  "http://localhost:5678/webhook/a50856e9-91d4-42f0-9603-8b0de6ff29cd"
 )
 
 # Query parameter appended to failing requests
@@ -27,7 +29,7 @@ FAIL_PARAM="fail=true"
 # ---------------------------------------------------------------------------
 # Defaults (overridable via flags)
 # ---------------------------------------------------------------------------
-TOTAL_REQUESTS=200
+TOTAL_REQUESTS=50
 DELAY=0.2
 FAIL_RATE=0.15   # 0.0–1.0
 
@@ -66,7 +68,7 @@ should_fail() {
 success_count=0
 fail_count=0
 
-echo "Sending $TOTAL_REQUESTS requests to ${#WEBHOOK_URLS[@]} webhook(s)…"
+echo "Sending $TOTAL_REQUESTS requests to ${#WEBHOOK_URLS[@]} webhook(s)..."
 echo "Fail rate: $(awk "BEGIN { printf \"%.0f%%\", $FAIL_RATE * 100 }")"
 echo "Delay between requests: ${DELAY}s"
 echo ""
@@ -86,7 +88,7 @@ for (( i = 1; i <= TOTAL_REQUESTS; i++ )); do
 
   http_status=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$request_url" || true)
 
-  printf "[%3d/%d] %s  %s  →  HTTP %s\n" \
+  printf "[%3d/%d] %s  %s  ->  HTTP %s\n" \
     "$i" "$TOTAL_REQUESTS" "$label" "$request_url" "$http_status"
 
   sleep "$DELAY"
