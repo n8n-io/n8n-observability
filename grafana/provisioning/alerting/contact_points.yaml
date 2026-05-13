@@ -8,7 +8,7 @@ contactPoints:
         type: slack
         settings:
           token: ${GRAFANA_SLACK_TOKEN}
-          recipient: "C09UBTEU8DP"
+          recipient: ${GRAFANA_SLACK_CHANNEL}
           title: |
             [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
           text: |

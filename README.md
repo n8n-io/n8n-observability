@@ -56,6 +56,20 @@ To add your own environments, edit the `n8n_base_url` variable in `dashboards/n8
 
 The `query` field uses Grafana's `Label : value, Label : value` syntax; keep the `options` array in sync. Grafana picks up the change within 30 seconds — no restart needed.
 
+## Slack alerts (optional)
+
+A bundled alert fires a Slack notification when a workflow produces more than 5 failed webhook executions in 30 seconds (see `grafana/provisioning/alerting/`).
+
+To enable it, set both env vars before starting the stack:
+
+```bash
+export GRAFANA_SLACK_TOKEN=xoxb-...   # Slack bot token with chat:write scope
+export GRAFANA_SLACK_CHANNEL=C0123ABC  # channel ID to post to
+docker compose up -d
+```
+
+If either is unset, the entrypoint script skips Slack alert provisioning entirely so Grafana boots without it.
+
 ## Stop
 
 ```bash

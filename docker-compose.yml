@@ -33,6 +33,7 @@ services:
       - GF_UNIFIED_ALERTING_ENABLED=true
       - GF_ALERTING_ENABLED=false
       - GRAFANA_SLACK_TOKEN=${GRAFANA_SLACK_TOKEN:-}
+      - GRAFANA_SLACK_CHANNEL=${GRAFANA_SLACK_CHANNEL:-}
     depends_on:
       - prometheus
     restart: unless-stopped
