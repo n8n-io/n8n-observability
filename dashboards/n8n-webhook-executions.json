@@ -35,13 +35,20 @@
       },
       {
         "name": "n8n_base_url",
-        "label": "n8n Base URL",
-        "type": "textbox",
-        "query": "http://localhost:5678",
+        "label": "Environment",
+        "type": "custom",
+        "query": "Local : http://localhost:5678",
+        "options": [
+          {
+            "text": "Local",
+            "value": "http://localhost:5678",
+            "selected": true
+          }
+        ],
         "current": {
-          "selected": false,
-          "text": "http://localhost:5678",
-          "value": "http://localhost:5678"
+          "text": "Local",
+          "value": "http://localhost:5678",
+          "selected": true
         }
       }
     ]

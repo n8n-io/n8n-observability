@@ -33,6 +33,29 @@ Open `http://localhost:9090/targets` — the `n8n` target should show state **UP
 
 Drop any Grafana dashboard `.json` file into `dashboards/`. Grafana polls that directory every 30 seconds and picks up new or changed files automatically — no restart needed.
 
+## Configuring n8n environments
+
+The `n8n Webhook Executions` dashboard has an **Environment** picker at the top that controls where the workflow-name links open (e.g. clicking a workflow opens `<base-url>/workflow/<id>` in n8n).
+
+To add your own environments, edit the `n8n_base_url` variable in `dashboards/n8n-webhook-executions.json`:
+
+```json
+{
+  "name": "n8n_base_url",
+  "label": "Environment",
+  "type": "custom",
+  "query": "Local : http://localhost:5678, Staging : https://n8n.staging.example.com, Production : https://n8n.example.com",
+  "options": [
+    { "text": "Local",      "value": "http://localhost:5678",           "selected": true  },
+    { "text": "Staging",    "value": "https://n8n.staging.example.com", "selected": false },
+    { "text": "Production", "value": "https://n8n.example.com",         "selected": false }
+  ],
+  "current": { "text": "Local", "value": "http://localhost:5678", "selected": true }
+}
+```
+
+The `query` field uses Grafana's `Label : value, Label : value` syntax; keep the `options` array in sync. Grafana picks up the change within 30 seconds — no restart needed.
+
 ## Stop
 
 ```bash
