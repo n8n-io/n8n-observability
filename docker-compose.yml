@@ -34,6 +34,7 @@ services:
       - GF_ALERTING_ENABLED=false
       - GRAFANA_SLACK_TOKEN=${GRAFANA_SLACK_TOKEN:-}
       - GRAFANA_SLACK_CHANNEL=${GRAFANA_SLACK_CHANNEL:-}
+      - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=1s
     depends_on:
       - prometheus
     restart: unless-stopped
