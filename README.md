@@ -31,7 +31,7 @@ Open `http://localhost:9090/targets` — the `n8n` target should show state **UP
 
 ## Adding dashboards
 
-Drop any Grafana dashboard `.json` file into `grafana/provisioning/dashboards/`. Grafana picks it up automatically within 30 seconds (no restart needed).
+Drop any Grafana dashboard `.json` file into `dashboards/`. Grafana polls that directory every 30 seconds and picks up new or changed files automatically — no restart needed.
 
 ## Stop
 
@@ -51,4 +51,4 @@ docker compose down -v
 |------|---------|
 | `prometheus/prometheus.yml` | Scrape config — change the target host/port here |
 | `grafana/provisioning/datasources/prometheus.yml` | Grafana datasource (auto-provisioned) |
-| `grafana/provisioning/dashboards/` | Place dashboard JSON files here |
+| `dashboards/` | Dashboard JSON files — auto-loaded with live reload |

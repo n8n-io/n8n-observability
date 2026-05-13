@@ -1,7 +1,10 @@
 {
   "uid": "n8n-webhook-executions",
   "title": "n8n Webhook Executions",
-  "tags": ["n8n", "webhooks"],
+  "tags": [
+    "n8n",
+    "webhooks"
+  ],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 2,
@@ -16,7 +19,10 @@
         "name": "workflow_name",
         "label": "Workflow",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "query": {
           "query": "label_values(n8n_workflow_info, workflow_name)",
           "refId": "StandardVariableQuery"
@@ -31,11 +37,19 @@
   },
   "panels": [
     {
-      "id": 1,
+      "id": 7,
       "type": "timeseries",
-      "title": "Webhook Executions — Success vs Failed",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 9 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "HTTP Requests by Webhook Path \u2014 Success vs Failed",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -46,38 +60,29 @@
             "spanNulls": false,
             "showPoints": "auto"
           }
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "success" },
-            "properties": [
-              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } },
-              { "id": "displayName", "value": "Success" }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "failed" },
-            "properties": [
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
-              { "id": "displayName", "value": "Failed" }
-            ]
-          }
-        ]
+        }
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "legendFormat": "success"
+          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} \u2014 success"
         },
         {
           "refId": "B",
-          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"failed\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "legendFormat": "failed"
+          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} \u2014 failed"
         }
       ]
     },
@@ -85,21 +90,42 @@
       "id": 2,
       "type": "stat",
       "title": "Total Executions",
-      "gridPos": { "x": 0, "y": 9, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "text", "value": null }
+              {
+                "color": "text",
+                "value": null
+              }
             ]
           }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "colorMode": "value" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "targets": [
         {
           "refId": "A",
@@ -112,19 +138,43 @@
       "id": 3,
       "type": "stat",
       "title": "Successful Executions",
-      "gridPos": { "x": 6, "y": 9, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "x": 5,
+        "y": 10,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": { "mode": "fixed", "fixedColor": "green" },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "colorMode": "value" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "targets": [
         {
           "refId": "A",
@@ -137,19 +187,43 @@
       "id": 4,
       "type": "stat",
       "title": "Failed Executions",
-      "gridPos": { "x": 12, "y": 9, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "x": 10,
+        "y": 10,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": { "mode": "fixed", "fixedColor": "red" },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          },
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "red", "value": null }]
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "colorMode": "value" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "value"
+      },
       "targets": [
         {
           "refId": "A",
@@ -162,25 +236,52 @@
       "id": 5,
       "type": "stat",
       "title": "Success Rate",
-      "gridPos": { "x": 18, "y": 9, "w": 6, "h": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "x": 15,
+        "y": 10,
+        "w": 5,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
           "min": 0,
           "max": 1,
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 0.9 },
-              { "color": "green", "value": 0.99 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.9
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
             ]
           }
         }
       },
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "auto", "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "background"
+      },
       "targets": [
         {
           "refId": "A",
@@ -190,11 +291,68 @@
       ]
     },
     {
+      "id": 10,
+      "type": "stat",
+      "title": "Current Requests / min",
+      "gridPos": {
+        "x": 20,
+        "y": 10,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}) * 60",
+          "legendFormat": "req/min"
+        }
+      ]
+    },
+    {
       "id": 6,
       "type": "timeseries",
-      "title": "Execution Duration — p50 / p90 / p99",
-      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Execution Duration \u2014 p50 / p90 / p99",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
@@ -208,8 +366,15 @@
         }
       },
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
@@ -230,14 +395,78 @@
       ]
     },
     {
-      "id": 7,
-      "type": "timeseries",
-      "title": "HTTP Requests by Webhook Path — Success vs Failed",
-      "gridPos": { "x": 0, "y": 21, "w": 24, "h": 10 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "id": 8,
+      "type": "table",
+      "title": "Top Workflows",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Count"
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "workflow_id": "Workflow ID",
+              "workflow_name": "Workflow Name",
+              "Value": "Count"
+            },
+            "indexByName": {
+              "workflow_id": 0,
+              "workflow_name": 1,
+              "Value": 2
+            },
+            "excludeByName": {}
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (workflow_id, workflow_name) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "instant": true,
+          "range": false,
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Average Execution Time per Webhook URL",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
           "min": 0,
           "custom": {
             "lineWidth": 2,
@@ -248,121 +477,21 @@
         }
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} — success"
-        },
-        {
-          "refId": "B",
-          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} — failed"
-        }
-      ]
-    },
-    {
-      "id": 8,
-      "type": "table",
-      "title": "HTTP Requests per Webhook Path",
-      "gridPos": { "x": 0, "y": 31, "w": 24, "h": 10 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Success Rate" },
-            "properties": [
-              { "id": "unit", "value": "percentunit" },
-              { "id": "min", "value": 0 },
-              { "id": "max", "value": 1 },
-              { "id": "custom.displayMode", "value": "color-background" },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    { "color": "red", "value": null },
-                    { "color": "yellow", "value": 0.9 },
-                    { "color": "green", "value": 0.99 }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Failed" },
-            "properties": [
-              { "id": "custom.displayMode", "value": "color-background" },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    { "color": "green", "value": null },
-                    { "color": "yellow", "value": 1 },
-                    { "color": "red", "value": 10 }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "sortBy": [{ "desc": true, "displayName": "Total" }]
-      },
-      "transformations": [
-        { "id": "merge", "options": {} },
-        {
-          "id": "organize",
-          "options": {
-            "renameByName": {
-              "webhook_path": "Webhook Path",
-              "Value #A": "Total",
-              "Value #B": "Success",
-              "Value #C": "Failed",
-              "Value #D": "Success Rate"
-            },
-            "indexByName": {
-              "webhook_path": 0,
-              "Value #A": 1,
-              "Value #B": 2,
-              "Value #C": 3,
-              "Value #D": 4
-            }
-          }
-        }
-      ],
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "instant": true,
-          "range": false
-        },
-        {
-          "refId": "B",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "instant": true,
-          "range": false
-        },
-        {
-          "refId": "C",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "instant": true,
-          "range": false
-        },
-        {
-          "refId": "D",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}) / sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
-          "instant": true,
-          "range": false
+          "expr": "sum by (workflow_name, method, webhook_path) (rate(n8n_http_request_duration_seconds_sum{path=\"/webhook/:path\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"}) / sum by (workflow_name, method, webhook_path) (rate(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}}"
         }
       ]
     }
