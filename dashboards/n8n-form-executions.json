@@ -117,6 +117,7 @@
         "stacking": "normal",
         "showValue": "auto",
         "xTickLabelRotation": 0,
+        "xField": "Endpoint",
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
@@ -151,23 +152,49 @@
           "options": {}
         },
         {
+          "id": "calculateField",
+          "options": {
+            "mode": "reduceRow",
+            "reduce": {
+              "reducer": "sum",
+              "include": ["Value #A", "Value #B"]
+            },
+            "alias": "Total"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Total",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
               "Time": true,
-              "workflow_id": true,
               "workflow_name": true,
-              "form_path": true
+              "Total": true
             },
             "renameByName": {
               "Value #A": "Success",
               "Value #B": "Failed",
-              "endpoint": "Endpoint"
+              "endpoint": "Endpoint",
+              "form_path": "Form Path",
+              "workflow_id": "Workflow ID"
             },
             "indexByName": {
               "endpoint": 0,
               "Value #A": 1,
-              "Value #B": 2
+              "Value #B": 2,
+              "form_path": 3,
+              "workflow_id": 4
             }
           }
         }
