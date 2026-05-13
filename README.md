@@ -39,7 +39,7 @@ Drop any Grafana dashboard `.json` file into `grafana/provisioning/dashboards/`.
 docker compose down
 ```
 
-Data is persisted in named Docker volumes (`prometheus_data`, `grafana_data`). To wipe it:
+Data is persisted in named Docker volumes (`n8n_prometheus_data`, `n8n_grafana_data`). To wipe it:
 
 ```bash
 docker compose down -v

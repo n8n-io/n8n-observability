@@ -1,12 +1,12 @@
 services:
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: n8n-prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
+      - n8n_prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -17,11 +17,11 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: n8n-grafana
     ports:
       - "3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana
+      - n8n_grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./dashboards:/etc/grafana/dashboards:ro
     environment:
@@ -33,5 +33,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  prometheus_data:
-  grafana_data:
+  n8n_prometheus_data:
+  n8n_grafana_data:
