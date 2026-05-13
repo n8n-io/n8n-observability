@@ -70,6 +70,8 @@ docker compose up -d
 
 If either is unset, the entrypoint script skips Slack alert provisioning entirely so Grafana boots without it.
 
+To fire the configured slack alert for testing purposes, use our mock script like this: `./mocks/generate-webhook-traffic.sh --requests 20 --delay 0 --fail-rate 1.0`
+
 ## Stop
 
 ```bash
