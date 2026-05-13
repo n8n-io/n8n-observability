@@ -4,7 +4,7 @@
   "tags": ["n8n", "webhooks"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-1h",
@@ -13,12 +13,12 @@
   "templating": {
     "list": [
       {
-        "name": "workflow_id",
+        "name": "workflow_name",
         "label": "Workflow",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
         "query": {
-          "query": "label_values(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\"}, workflow_id)",
+          "query": "label_values(n8n_workflow_info, workflow_name)",
           "refId": "StandardVariableQuery"
         },
         "multi": true,
@@ -71,12 +71,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\", workflow_id=~\"$workflow_id\"}[$__rate_interval]))",
+          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "success"
         },
         {
           "refId": "B",
-          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"failed\", workflow_id=~\"$workflow_id\"}[$__rate_interval]))",
+          "expr": "sum by (status) (increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"failed\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "failed"
         }
       ]
@@ -103,7 +103,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "Total"
         }
       ]
@@ -128,7 +128,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "Success"
         }
       ]
@@ -153,7 +153,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"failed\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"failed\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "Failed"
         }
       ]
@@ -184,7 +184,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\", workflow_id=~\"$workflow_id\"}[$__range])) / sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\", status=\"success\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}) / sum(increase(n8n_workflow_execution_duration_seconds_count{mode=\"webhook\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "legendFormat": "Success Rate"
         }
       ]
@@ -214,17 +214,17 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\", workflow_id=~\"$workflow_id\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
           "legendFormat": "p50"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.90, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\", workflow_id=~\"$workflow_id\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.90, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
           "legendFormat": "p90"
         },
         {
           "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\", workflow_id=~\"$workflow_id\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_workflow_execution_duration_seconds_bucket{mode=\"webhook\"}[$__rate_interval]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}))",
           "legendFormat": "p99"
         }
       ]
@@ -254,13 +254,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\", workflow_id=~\"$workflow_id\"}[$__rate_interval]))",
-          "legendFormat": "{{webhook_path}} — success"
+          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} — success"
         },
         {
           "refId": "B",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\", workflow_id=~\"$workflow_id\"}[$__rate_interval]))",
-          "legendFormat": "{{webhook_path}} — failed"
+          "expr": "sum by (workflow_name, method, webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\"}[$__rate_interval]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
+          "legendFormat": "{{workflow_name}} / {{method}} / {{webhook_path}} — failed"
         }
       ]
     },
@@ -342,25 +342,25 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "instant": true,
           "range": false
         },
         {
           "refId": "B",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "instant": true,
           "range": false
         },
         {
           "refId": "C",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[45]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "instant": true,
           "range": false
         },
         {
           "refId": "D",
-          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\", workflow_id=~\"$workflow_id\"}[$__range])) / sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", workflow_id=~\"$workflow_id\"}[$__range]))",
+          "expr": "sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\", status_code=~\"[23]..\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"}) / sum by (webhook_path) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left() n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "instant": true,
           "range": false
         }
