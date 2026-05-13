@@ -8,7 +8,7 @@
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
-  "refresh": "1s",
+  "refresh": "auto",
   "time": {
     "from": "now-15m",
     "to": "now"
