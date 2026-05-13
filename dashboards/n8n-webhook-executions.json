@@ -32,6 +32,17 @@
         "allValue": ".*",
         "refresh": 2,
         "sort": 1
+      },
+      {
+        "name": "n8n_base_url",
+        "label": "n8n Base URL",
+        "type": "textbox",
+        "query": "http://localhost:5678",
+        "current": {
+          "selected": false,
+          "text": "http://localhost:5678",
+          "value": "http://localhost:5678"
+        }
       }
     ]
   },
@@ -412,7 +423,38 @@
         "defaults": {
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Workflow Name"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open workflow in n8n",
+                    "url": "${n8n_base_url}/workflow/${__data.fields[\"workflow_id\"]}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "workflow_id"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "sortBy": [
@@ -427,16 +469,16 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "workflow_id": "Workflow ID",
               "workflow_name": "Workflow Name",
               "Value": "Count"
             },
             "indexByName": {
-              "workflow_id": 0,
-              "workflow_name": 1,
-              "Value": 2
+              "workflow_name": 0,
+              "Value": 1
             },
-            "excludeByName": {}
+            "excludeByName": {
+              "Time": true
+            }
           }
         }
       ],
@@ -446,7 +488,8 @@
           "expr": "sum by (workflow_id, workflow_name) (increase(n8n_http_request_duration_seconds_count{path=\"/webhook/:path\"}[$__range]) * on(workflow_id) group_left(workflow_name) n8n_workflow_info{workflow_name=~\"$workflow_name\"})",
           "instant": true,
           "range": false,
-          "legendFormat": ""
+          "legendFormat": "",
+          "format": "table"
         }
       ]
     },
