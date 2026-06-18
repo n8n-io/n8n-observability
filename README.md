@@ -91,3 +91,7 @@ docker compose down -v
 | `prometheus/prometheus.yml` | Scrape config — change the target host/port here |
 | `grafana/provisioning/datasources/prometheus.yml` | Grafana datasource (auto-provisioned) |
 | `dashboards/` | Dashboard JSON files — auto-loaded with live reload |
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.md).
