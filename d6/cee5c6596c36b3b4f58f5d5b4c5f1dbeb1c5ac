@@ -1,0 +1,31 @@
+local-dev/docker-compose.yml
+  s_f3a70b5fcc753f::t_e7894a625b5670 28
+dashboards/grafana/n8n-webhook-executions/README.md
+  s_f3a70b5fcc753f::t_8cb5b79883d40c 1-52
+README.md
+  s_f3a70b5fcc753f::t_cdbf51041b4f1e 5,7,9-12,14,16,18,20,22,24-26,28,30,32-34,37-40,42,46,54,56,58-67
+  h_c63dce324dfc7b 1,3,44,68
+dashboards/grafana/n8n-form-executions/README.md
+  s_f3a70b5fcc753f::t_f00b131a92d5f2 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "d6cee5c6596c36b3b4f58f5d5b4c5f1dbeb1c5ac",
+  "prompts": {},
+  "humans": {
+    "h_c63dce324dfc7b": {
+      "author": "konstantintieber <konstantin.tieber@n8n.io>"
+    }
+  },
+  "sessions": {
+    "s_f3a70b5fcc753f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d18a671-eb1a-4364-a88b-ca3e714fdda4",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "konstantintieber <konstantin.tieber@n8n.io>"
+    }
+  }
+}
