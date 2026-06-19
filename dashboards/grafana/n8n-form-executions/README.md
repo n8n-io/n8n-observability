@@ -13,6 +13,7 @@ Enable metrics in n8n by setting the following environment variables before star
 ```
 N8N_METRICS=true
 N8N_METRICS_INCLUDE_FORM_METRICS=true
+N8N_METRICS_INCLUDE_WORKFLOW_INFO=true
 ```
 
 See the [n8n Prometheus docs](https://docs.n8n.io/hosting/configuration/configuration-examples/prometheus/) for more information.
