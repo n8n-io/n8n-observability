@@ -25,7 +25,7 @@ services:
       - n8n_grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning-src:ro
       - ./grafana/entrypoint.sh:/usr/local/bin/n8n-grafana-entrypoint.sh:ro
-      - ./dashboards:/etc/grafana/dashboards:ro
+      - ../dashboards/grafana:/etc/grafana/dashboards:ro
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
