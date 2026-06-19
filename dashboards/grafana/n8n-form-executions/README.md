@@ -4,7 +4,7 @@ Grafana dashboard for monitoring form execution activity in n8n — tracking exe
 
 ## Screenshots
 
-<!-- Screenshots will be added here -->
+![n8n Form Executions](n8n-form-executions-screenshot.png)
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ N8N_METRICS_INCLUDE_FORM_METRICS=true
 
 See the [n8n Prometheus docs](https://docs.n8n.io/hosting/configuration/configuration-examples/prometheus/) for more information.
 
-Verify metrics are exposed by visiting `http://your-n8n-host.com/metrics` — you should see Prometheus-formatted output including `n8n_form_*` metrics.
+Verify metrics are exposed by visiting `http://your-n8n-host.com/metrics` — you should see Prometheus-formatted output including `n8n_form_submission_duration_seconds` metrics.
 
 ## Import into Grafana
 
@@ -26,3 +26,27 @@ Verify metrics are exposed by visiting `http://your-n8n-host.com/metrics` — yo
 3. Select [`n8n-form-executions.json`](n8n-form-executions.json)
 4. Select your Prometheus datasource when prompted
 5. Click **Import**
+
+## Configuration
+
+### Environment picker
+
+The dashboard has an **Environment** picker at the top that controls where workflow-name links open (e.g. clicking a workflow name opens `<base-url>/workflow/<id>` in n8n).
+
+To add your own environments, edit the `n8n_base_url` variable in `n8n-webhook-executions.json`:
+
+```json
+{
+  "name": "n8n_base_url",
+  "label": "Environment",
+  "type": "custom",
+  "query": "Local : http://localhost:5678, Staging : https://n8n.staging.example.com, Production : https://n8n.example.com",
+  "options": [
+    { "text": "Local",      "value": "http://localhost:5678",           "selected": true  },
+    { "text": "Staging",    "value": "https://n8n.staging.example.com", "selected": false },
+    { "text": "Production", "value": "https://n8n.example.com",         "selected": false }
+  ]
+}
+```
+
+The `query` field uses Grafana's `Label : value, Label : value` syntax; keep the `options` array in sync.
