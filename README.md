@@ -6,10 +6,10 @@ Currently covers Prometheus + Grafana, with more observability tools planned (e.
 
 ## Dashboards
 
-| Dashboard | Description |
-|-----------|-------------|
-| [n8n Webhook Executions](dashboards/grafana/n8n-webhook-executions/) | Execution counts, success/failure rates, and latency for webhook workflows |
-| [n8n Form Executions](dashboards/grafana/n8n-form-executions/) | Execution counts and success/failure rates for form workflows |
+| Dashboard | Description | Screenshot |
+|-----------|-------------|------------|
+| [n8n Webhook Executions](dashboards/grafana/n8n-webhook-executions/) | Execution counts, success/failure rates, and latency for webhook workflows | ![n8n Webhook Executions](dashboards/grafana/n8n-webhook-executions/n8n-webhook-executions-screenshot.png) |
+| [n8n Form Executions](dashboards/grafana/n8n-form-executions/) | Execution counts and success/failure rates for form workflows | ![n8n Form Executions](dashboards/grafana/n8n-form-executions/n8n-form-executions-screenshot.png) |
 
 Each dashboard folder contains the Grafana JSON file and a README with import instructions and the required n8n environment variables.
 
@@ -52,18 +52,6 @@ docker compose up -d
 ```
 
 If either variable is unset, Slack provisioning is skipped and Grafana boots without it.
-
-### Mock traffic (for testing)
-
-The [`mocks/n8n-webhook-executions/`](mocks/n8n-webhook-executions/) directory contains scripts to generate realistic webhook traffic against your local n8n instance, useful for testing the dashboard and triggering Slack alerts.
-
-```bash
-# One-off batch (e.g. to trigger a Slack alert)
-./mocks/n8n-webhook-executions/generate-webhook-traffic.sh --requests 20 --delay 0 --fail-rate 1.0
-
-# Continuous background traffic
-./mocks/n8n-webhook-executions/generate-historic-webhook-traffic.sh
-```
 
 ### Stop
 

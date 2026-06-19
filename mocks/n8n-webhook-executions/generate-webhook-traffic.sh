@@ -17,10 +17,10 @@ set -euo pipefail
 # Configuration — add or remove webhook URLs here
 # ---------------------------------------------------------------------------
 WEBHOOK_URLS=(
-  "http://localhost:5678/webhook/098ad453-5b09-4c2c-bc3c-6fae90939ae9"
-  "http://localhost:5678/webhook/294febd8-8e32-42f3-8fb3-b6a9f88cd915"
-  "http://localhost:5678/webhook/a5af11f1-6216-4afb-bd99-7641cd431108"
-  "http://localhost:5678/webhook/a50856e9-91d4-42f0-9603-8b0de6ff29cd"
+  "http://localhost:5678/webhook/df19ad35-ae1f-4f16-8572-92a1f4e42461"
+  "http://localhost:5678/webhook/7dbdc220-a3f4-4223-b766-6c8050dc29fb"
+  "http://localhost:5678/webhook/1bd2db12-f910-4128-80cd-163ecb28fa7f"
+  "http://localhost:5678/webhook/0b1dbbc0-3cdc-476f-980a-6188cfda9a50"
 )
 
 # Query parameter appended to failing requests

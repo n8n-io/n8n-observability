@@ -4,7 +4,7 @@ Grafana dashboard for monitoring webhook execution activity in n8n — tracking 
 
 ## Screenshots
 
-<!-- Screenshots will be added here -->
+![n8n Webhook Executions](n8n-webhook-executions-screenshot.png)
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ N8N_METRICS_INCLUDE_WEBHOOK_METRICS=true
 
 See the [n8n Prometheus docs](https://docs.n8n.io/hosting/configuration/configuration-examples/prometheus/) for more information.
 
-Verify metrics are exposed by visiting `http://your-n8n-host.com/metrics` — you should see Prometheus-formatted output including `n8n_webhook_*` metrics.
+Verify metrics are exposed by visiting `http://your-n8n-host.com/metrics` — you should see Prometheus-formatted output including `n8n_webhook_request_duration_seconds` metrics.
 
 ## Import into Grafana
 
@@ -50,3 +50,17 @@ To add your own environments, edit the `n8n_base_url` variable in `n8n-webhook-e
 ```
 
 The `query` field uses Grafana's `Label : value, Label : value` syntax; keep the `options` array in sync.
+
+## Local development
+
+### Mock traffic (for testing)
+
+The [`mocks/n8n-webhook-executions/`](mocks/n8n-webhook-executions/) directory contains scripts to generate realistic webhook traffic against your local n8n instance, useful for testing the dashboard and triggering Slack alerts.
+
+```bash
+# One-off batch (e.g. to trigger a Slack alert)
+./mocks/n8n-webhook-executions/generate-webhook-traffic.sh --requests 20 --delay 0 --fail-rate 1.0
+
+# Continuous background traffic
+./mocks/n8n-webhook-executions/generate-historic-webhook-traffic.sh
+```
