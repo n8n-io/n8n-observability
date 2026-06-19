@@ -1,0 +1,32 @@
+mocks/n8n-webhook-executions/generate-webhook-traffic.sh
+  h_c63dce324dfc7b 20-23
+README.md
+  s_761c424167df3d::t_c0f04742eeee99 9-12
+dashboards/grafana/n8n-form-executions/README.md
+  s_761c424167df3d::t_435a8a735b6d3d 7
+  h_c63dce324dfc7b 20,29-52
+dashboards/grafana/n8n-webhook-executions/README.md
+  s_761c424167df3d::t_26e7239ef3571f 7
+  h_c63dce324dfc7b 20,53-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "29341c974067d7e6f2f7ba98011a6f84f99fdc3e",
+  "prompts": {},
+  "humans": {
+    "h_c63dce324dfc7b": {
+      "author": "konstantintieber <konstantin.tieber@n8n.io>"
+    }
+  },
+  "sessions": {
+    "s_761c424167df3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41e8487c-0219-44cd-afb9-6aa73e391043",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "konstantintieber <konstantin.tieber@n8n.io>"
+    }
+  }
+}
