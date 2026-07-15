@@ -10,6 +10,7 @@ Currently covers Prometheus + Grafana, with more observability tools planned (e.
 |-----------|-------------|------------|
 | [n8n Webhook Executions](dashboards/grafana/n8n-webhook-executions/) | Execution counts, success/failure rates, and latency for webhook workflows | ![n8n Webhook Executions](dashboards/grafana/n8n-webhook-executions/n8n-webhook-executions-screenshot.png) |
 | [n8n Form Executions](dashboards/grafana/n8n-form-executions/) | Execution counts and success/failure rates for form workflows | ![n8n Form Executions](dashboards/grafana/n8n-form-executions/n8n-form-executions-screenshot.png) |
+| [n8n Durable Scheduler](dashboards/grafana/n8n-scheduler/) | Queue depth, scheduling lag, dispatch throughput, retries, and dead-letters, with a per-main breakdown | ![n8n Durable Scheduler](dashboards/grafana/n8n-scheduler/n8n-scheduler-screenshot.png) |
 
 Each dashboard folder contains the Grafana JSON file and a README with import instructions and the required n8n environment variables.
 

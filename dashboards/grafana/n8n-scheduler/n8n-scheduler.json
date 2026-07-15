@@ -1,0 +1,944 @@
+{
+  "uid": "n8n-scheduler",
+  "title": "n8n Durable Scheduler",
+  "tags": [
+    "n8n",
+    "scheduler"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "auto",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "task_type",
+        "label": "Task Type",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(n8n_scheduler_tasks_dispatched_total, task_type)",
+          "refId": "StandardVariableQuery"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "instance",
+        "label": "Main instance",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(n8n_scheduler_tasks_dispatched_total, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Fire Success Rate",
+      "description": "Share of finished tasks that succeeded over the range.\n\nWhen bad: below ~90% means handler failures \u2014 break it down by task type. One type points to a node bug, all types to infra/DB.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.9
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          },
+          "min": 0,
+          "max": 1
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(n8n_scheduler_tasks_completed_total{task_type=~\"$task_type\", result=\"success\", instance=~\"$instance\"}[$__range])) / clamp_min(sum(increase(n8n_scheduler_tasks_completed_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__range])), 1)",
+          "legendFormat": "Fire Success Rate"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Oldest Pending Age",
+      "description": "Age of the oldest due task; 0 means no due backlog. Aggregated with max.\n\nWhen bad: sustained growth means dispatch can't keep up \u2014 check DB load and main count, and use the Per-Main Breakdown row to isolate a node.",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 120
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(n8n_scheduler_oldest_pending_age_seconds{instance=~\"$instance\"})",
+          "legendFormat": "Oldest Pending Age"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Dispatch Rate",
+      "description": "Tasks dispatched per second, across all mains.",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 2
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(n8n_scheduler_tasks_dispatched_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Dispatch Rate"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Dead-letters (range)",
+      "description": "Tasks permanently failed after exhausting attempts, over the range.\n\nWhen bad: any dead-letter is a permanently failed task \u2014 inspect that task type's logs and the Per-Main Breakdown row.",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(n8n_scheduler_tasks_dead_lettered_total{instance=~\"$instance\"}[$__range]))",
+          "legendFormat": "Dead-letters (range)"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Queue Depth & Backlog Age",
+      "description": "Pending / due / running (left axis) and oldest-due-task age in seconds (right axis). Cluster-wide, aggregated with max.\n\nWhen bad: sustained growth means dispatch can't keep up \u2014 check DB load and main count, and use the Per-Main Breakdown row to isolate a node.",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Due"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Oldest pending age (s)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "age (s)"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(n8n_scheduler_tasks_pending{instance=~\"$instance\"})",
+          "legendFormat": "Pending"
+        },
+        {
+          "refId": "B",
+          "expr": "max(n8n_scheduler_tasks_due{instance=~\"$instance\"})",
+          "legendFormat": "Due"
+        },
+        {
+          "refId": "C",
+          "expr": "max(n8n_scheduler_tasks_running{instance=~\"$instance\"})",
+          "legendFormat": "Running"
+        },
+        {
+          "refId": "D",
+          "expr": "max(n8n_scheduler_oldest_pending_age_seconds{instance=~\"$instance\"})",
+          "legendFormat": "Oldest pending age (s)"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Fire Throughput & Outcomes",
+      "description": "Finished tasks per second by result; the stack height is overall throughput. Filter by task type with the variable above.\n\nWhen bad: below ~90% means handler failures \u2014 break it down by task type. One type points to a node bug, all types to infra/DB.",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "spanNulls": false,
+            "showPoints": "auto",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failure"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (result) (rate(n8n_scheduler_tasks_completed_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "{{result}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Dispatch Lag \u2014 p50 / p90 / p99",
+      "description": "Delay from a task becoming due to being dispatched.\n\nWhen bad: p99 diverging while p50 stays low means a subset of tasks is stuck (lease contention, DB locks) \u2014 compare by task type and by main.",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.9, sum by (le) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "p90"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Retries, Reclaims & Dead-letters per Second",
+      "description": "Retries and reaper reclaims are recoverable; dead-letters are permanent.\n\nWhen bad: dead-letters > 0 are permanent failures after exhausting attempts \u2014 inspect that task type's logs. Rising reclaims mean mains are losing leases (crash, GC, network).",
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Retries"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reclaimed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Dead-lettered"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(n8n_scheduler_task_retries_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Retries"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(n8n_scheduler_tasks_reclaimed_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Reclaimed"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(rate(n8n_scheduler_tasks_dead_lettered_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Dead-lettered"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Housekeeping \u2014 Materialization & Pruning",
+      "description": "Background work: occurrences materialized from schedules, jobs deferred for retry, and finished tasks removed by retention.",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Jobs deferred"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pruned"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(n8n_scheduler_occurrences_materialized_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Occurrences materialized"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(n8n_scheduler_jobs_deferred_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Jobs deferred"
+        },
+        {
+          "refId": "C",
+          "expr": "sum(rate(n8n_scheduler_tasks_pruned_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "legendFormat": "Pruned"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "collapsed": true,
+      "title": "Per-Main Breakdown (which main is misbehaving?)",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "Dispatch Rate by Main",
+          "description": "Dispatch rate by main. A main flat at zero or hogging dispatches stands out.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
+          "gridPos": {
+            "x": 0,
+            "y": 32,
+            "w": 12,
+            "h": 9
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (instance) (rate(n8n_scheduler_tasks_dispatched_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+              "legendFormat": "{{instance}}"
+            }
+          ]
+        },
+        {
+          "id": 22,
+          "type": "timeseries",
+          "title": "Fire Failure Rate by Main",
+          "description": "Failure ratio by main. A rising ratio points to a node-local problem.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
+          "gridPos": {
+            "x": 12,
+            "y": 32,
+            "w": 12,
+            "h": 9
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "auto"
+              },
+              "max": 1
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (instance) (rate(n8n_scheduler_tasks_completed_total{task_type=~\"$task_type\", result=\"failure\", instance=~\"$instance\"}[$__rate_interval])) / sum by (instance) (rate(n8n_scheduler_tasks_completed_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+              "legendFormat": "{{instance}}"
+            }
+          ]
+        },
+        {
+          "id": 23,
+          "type": "timeseries",
+          "title": "Dispatch Lag p99 by Main",
+          "description": "p99 dispatch lag by main. A lagging main is behind on its dispatch loop.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
+          "gridPos": {
+            "x": 0,
+            "y": 41,
+            "w": 12,
+            "h": 9
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "min": 0,
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "histogram_quantile(0.99, sum by (le, instance) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval])))",
+              "legendFormat": "{{instance}}"
+            }
+          ]
+        },
+        {
+          "id": 24,
+          "type": "timeseries",
+          "title": "Retries & Dead-letters by Main",
+          "description": "Retries and dead-letters by main.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
+          "gridPos": {
+            "x": 12,
+            "y": 41,
+            "w": 12,
+            "h": 9
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true,
+              "calcs": [
+                "mean",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (instance) (rate(n8n_scheduler_task_retries_total{task_type=~\"$task_type\", instance=~\"$instance\"}[$__rate_interval]))",
+              "legendFormat": "{{instance}} retries"
+            },
+            {
+              "refId": "B",
+              "expr": "sum by (instance) (rate(n8n_scheduler_tasks_dead_lettered_total{instance=~\"$instance\"}[$__rate_interval]))",
+              "legendFormat": "{{instance}} dead-lettered"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
