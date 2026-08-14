@@ -1,0 +1,36 @@
+mocks/n8n-poll-triggers/README.md
+  s_e826e288108e19::t_ce292d2e81010e 1-88
+README.md
+  s_daf172946b5111::t_61bbd7eefaba11 14
+dashboards/grafana/n8n-poll-triggers/README.md
+  s_e826e288108e19::t_550921f75b1632 1-6,17-118
+  s_daf172946b5111::t_2e3273b6bd1a4b 7-16
+mocks/n8n-poll-triggers/poll-trigger-metrics-exporter.py
+  s_e826e288108e19::t_4c92ecb5fb770d 1-317
+dashboards/grafana/n8n-poll-triggers/n8n-poll-triggers.json
+  s_e826e288108e19::t_df006f170d1fcd 1-1041
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "330f08a64b6694022ab451090fac013f4da193bd",
+  "prompts": {},
+  "sessions": {
+    "s_daf172946b5111": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "efb8d45b-c633-4e7f-8527-4dd95c28cab7",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    },
+    "s_e826e288108e19": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f2106c0-6264-4e38-899b-5de2cd286aa8",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    }
+  }
+}
