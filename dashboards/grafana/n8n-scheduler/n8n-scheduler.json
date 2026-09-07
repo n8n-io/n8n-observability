@@ -717,13 +717,117 @@
       ]
     },
     {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Owner Reconciliation \u2014 Quarantined, Deleted & Revived",
+      "description": "Jobs the reconciliation sweep quarantined (owner gone), deleted (still gone after the grace period) or revived (owner found again). Approximate counts per sweep.",
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "auto"
+          },
+          "decimals": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Quarantined"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Deleted"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Revived"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "round(sum(increase(n8n_scheduler_jobs_quarantined_total{instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "Quarantined"
+        },
+        {
+          "refId": "B",
+          "expr": "round(sum(increase(n8n_scheduler_orphaned_jobs_deleted_total{instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "Deleted"
+        },
+        {
+          "refId": "C",
+          "expr": "round(sum(increase(n8n_scheduler_jobs_revived_total{instance=~\"$instance\"}[$__rate_interval])))",
+          "legendFormat": "Revived"
+        }
+      ]
+    },
+    {
       "id": 20,
       "type": "row",
       "collapsed": true,
       "title": "Per-Main Breakdown (which main is misbehaving?)",
       "gridPos": {
         "x": 0,
-        "y": 31,
+        "y": 40,
         "w": 24,
         "h": 1
       },
@@ -735,7 +839,7 @@
           "description": "Dispatch rate by main. A main flat at zero or hogging dispatches stands out.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
           "gridPos": {
             "x": 0,
-            "y": 32,
+            "y": 41,
             "w": 12,
             "h": 9
           },
@@ -786,7 +890,7 @@
           "description": "Failure ratio by main. A rising ratio points to a node-local problem.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
           "gridPos": {
             "x": 12,
-            "y": 32,
+            "y": 41,
             "w": 12,
             "h": 9
           },
@@ -838,7 +942,7 @@
           "description": "p99 dispatch lag by main. A lagging main is behind on its dispatch loop.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
           "gridPos": {
             "x": 0,
-            "y": 41,
+            "y": 50,
             "w": 12,
             "h": 9
           },
@@ -889,7 +993,7 @@
           "description": "Retries and dead-letters by main.\n\nWhen bad: a single diverging main points to a node-local problem (resources, version, DB connectivity) \u2014 drain or restart it in isolation.",
           "gridPos": {
             "x": 12,
-            "y": 41,
+            "y": 50,
             "w": 12,
             "h": 9
           },

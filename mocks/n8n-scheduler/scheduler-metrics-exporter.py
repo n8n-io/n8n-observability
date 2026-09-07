@@ -4,7 +4,8 @@ Synthetic Prometheus exporter for the n8n Durable Scheduler dashboard.
 
 Serves a /metrics endpoint mimicking the `n8n_scheduler_*` series with moving demo
 data: multiple task types, ~5% failures, retries, rare dead-letters, a dispatch-lag
-histogram, queue-depth gauges on slow waves, and periodic backlog spikes.
+histogram, queue-depth gauges on slow waves, periodic backlog spikes, and owner
+reconciliation bursts (quarantined / deleted / revived).
 
 --instances N simulates N mains via an `instance` label (n8n-main-1..N). When N > 1
 the last main is degraded (higher failures, worse lag, more dead-letters) so the
@@ -66,6 +67,9 @@ class InstanceState:
         self.reclaimed = 0.0
         self.dead_lettered = 0.0
         self.pruned = 0.0
+        self.quarantined = 0.0
+        self.orphans_deleted = 0.0
+        self.revived = 0.0
 
     def advance(self, dt: float, elapsed: float):
         weights = LAG_WEIGHTS_DEGRADED if self.degraded else LAG_WEIGHTS_HEALTHY
@@ -95,6 +99,11 @@ class InstanceState:
             self.reclaimed += 0.08 * dt * random.uniform(0.0, 1.5)
             if math.sin(elapsed / 60.0) > 0.98:
                 self.pruned += 40.0 * dt
+            # Owner reconciliation sweep: short bursts on a separate phase from pruning.
+            if math.sin(elapsed / 45.0 + 2.0) > 0.97:
+                self.quarantined += 2.0 * dt * random.uniform(0.5, 1.5)
+                self.orphans_deleted += 0.4 * dt * random.uniform(0.0, 1.5)
+                self.revived += 0.6 * dt * random.uniform(0.0, 1.5)
 
     def _observe_lag(self, t: str, n: float, weights):
         overflow_w = 0.001 if self.degraded else 0.00005
@@ -222,6 +231,15 @@ class SchedulerState:
         counter("scheduler_tasks_pruned_total",
                 "Total number of finished scheduler tasks deleted by retention.",
                 [(f'instance="{i.name}"', i.pruned) for i in insts])
+        counter("scheduler_jobs_quarantined_total",
+                "Total number of scheduled jobs disabled by owner reconciliation because their owner was reported gone.",
+                [(f'instance="{i.name}"', i.quarantined) for i in insts])
+        counter("scheduler_orphaned_jobs_deleted_total",
+                "Total number of quarantined scheduled jobs deleted by owner reconciliation after their owner stayed gone past the quarantine grace.",
+                [(f'instance="{i.name}"', i.orphans_deleted) for i in insts])
+        counter("scheduler_jobs_revived_total",
+                "Total number of quarantined scheduled jobs re-enabled by owner reconciliation because their owner turned out to still exist.",
+                [(f'instance="{i.name}"', i.revived) for i in insts])
 
         pending, due, running, oldest = self._gauges()
         names = [i.name for i in insts]
