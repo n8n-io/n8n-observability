@@ -7,7 +7,8 @@ without waiting for real backlog and failures.
 
 It emits multiple task types, a ~5% failure rate, occasional retries, rare
 dead-letters, a dispatch-lag histogram (p50 ≈ 50 ms, p90 ≈ 0.5 s, p99 ≈ 2.5 s),
-queue-depth gauges on slow waves, and periodic "oldest pending age" spikes.
+queue-depth gauges on slow waves, periodic "oldest pending age" spikes, and owner
+reconciliation bursts (quarantined / deleted / revived jobs on the leader main).
 Counters advance from real elapsed time, so a few minutes at the stack's 1 s
 scrape interval fills in history.
 

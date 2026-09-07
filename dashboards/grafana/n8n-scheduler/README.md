@@ -1,7 +1,7 @@
 # n8n Durable Scheduler Dashboard
 
-Queue depth, scheduling lag, dispatch throughput, retries, and dead-letters for
-n8n's Durable Scheduler.
+Queue depth, scheduling lag, dispatch throughput, retries, dead-letters, and owner
+reconciliation for n8n's Durable Scheduler.
 
 ## Screenshots
 
@@ -37,7 +37,7 @@ Verify at `http://your-n8n-host.com/metrics` — look for `n8n_scheduler_*` seri
 
 ## Panels
 
-Four stat tiles across the top, then five time-series rows, then a collapsed
+Four stat tiles across the top, then six time-series rows, then a collapsed
 per-main row.
 
 | Panel | Shows | Action if it looks wrong |
@@ -51,6 +51,7 @@ per-main row.
 | Dispatch Lag p50/p90/p99 | Delay from due to dispatched | p99 diverging while p50 stays low: a subset is stuck (lease contention, DB locks) — compare by type and main |
 | Retries, Reclaims & Dead-letters | Recoverable vs permanent failures | Reclaims rising: mains are losing leases (crash, GC, network). Dead-letters: inspect logs |
 | Housekeeping — Materialization & Pruning | Occurrences materialized, jobs deferred, tasks pruned | Materialization flat at zero or pruning never runs: check the leader main (the one main that runs background jobs) |
+| Owner Reconciliation — Quarantined, Deleted & Revived | Jobs the sweep quarantined (owner gone), deleted (still gone after the grace period) or revived (owner found again) | — |
 | Per-Main Breakdown | Dispatch rate, failure rate, lag p99, dead-letters `by (instance)` — collapsed by default | One main diverging: node-local problem — drain or restart that instance |
 
 The same "action if it looks wrong" note is on each panel's tooltip (the ⓘ icon),
@@ -95,6 +96,9 @@ cluster-wide values read on each scrape.
 | `n8n_scheduler_tasks_reclaimed_total` | counter | — |
 | `n8n_scheduler_tasks_dead_lettered_total` | counter | — |
 | `n8n_scheduler_tasks_pruned_total` | counter | — |
+| `n8n_scheduler_jobs_quarantined_total` | counter | — |
+| `n8n_scheduler_orphaned_jobs_deleted_total` | counter | — |
+| `n8n_scheduler_jobs_revived_total` | counter | — |
 
 Queries assume the default `n8n_` prefix; adjust them if you set
 `N8N_METRICS_PREFIX`.
