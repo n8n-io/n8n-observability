@@ -143,9 +143,11 @@ Queries use the default `n8n_` prefix. Adjust them if you set
   *absent* until its first success on the new leader. Overdue Factor draws those
   on its right axis in purple instead of leaving a silent gap.
 - **Use `max by (task)` for a task's gauges, `sum` for counters and histograms.**
-  Summing a per-task gauge across mains multiplies it by the number of mains. Runs
-  in flight is the exception: it is summed, because two mains really can have runs
-  going at the same time.
+  Summing a per-task gauge across mains multiplies it by the number of mains.
+  `n8n_system_task_runs_in_flight` is the exception and is summed: it counts the
+  runs in flight *on that instance*, so runs on two mains are two different runs.
+  `max` there would undercount a durable task dispatched to several mains, and
+  would hide a split brain running an in-memory task twice.
 - **`n8n_system_task_runs_skipped_total` has no `mode` label.** It only exists for
   in-memory runs, so filtering it by `mode` returns nothing. Retries, fire lag and the next-run
   gauge are in-memory only too. On the durable side, read
