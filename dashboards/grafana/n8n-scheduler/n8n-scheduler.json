@@ -13,6 +13,22 @@
     "from": "now-1h",
     "to": "now"
   },
+  "links": [
+    {
+      "title": "n8n System Tasks",
+      "type": "dashboards",
+      "tags": [
+        "system-tasks"
+      ],
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false,
+      "tooltip": "The system tasks this scheduler runs, plus the in-memory ones it does not",
+      "url": ""
+    }
+  ],
   "templating": {
     "list": [
       {

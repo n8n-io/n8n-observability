@@ -12,6 +12,7 @@ Currently covers Prometheus + Grafana, with more observability tools planned (e.
 | [n8n Form Executions](dashboards/grafana/n8n-form-executions/) | Execution counts and success/failure rates for form workflows | ![n8n Form Executions](dashboards/grafana/n8n-form-executions/n8n-form-executions-screenshot.png) |
 | [n8n Durable Scheduler](dashboards/grafana/n8n-scheduler/) | Queue depth, scheduling lag, dispatch throughput, retries, dead-letters, and owner reconciliation, with a per-main breakdown | ![n8n Durable Scheduler](dashboards/grafana/n8n-scheduler/n8n-scheduler-screenshot.png) |
 | [n8n Poll Triggers](dashboards/grafana/n8n-poll-triggers/) | Poll tick throughput, duration, error kinds, overlap and duplicate-risk signals, and cursor commit health, with a per-node-type breakdown | ![n8n Poll Triggers](dashboards/grafana/n8n-poll-triggers/n8n-poll-triggers-screenshot.png) |
+| [n8n System Tasks](dashboards/grafana/n8n-system-tasks/) | Overdue factor, run outcomes and duration, skipped occurrences, timer fire lag, retries, and the in-memory / durable split for n8n's own background tasks | ![n8n System Tasks](dashboards/grafana/n8n-system-tasks/n8n-system-tasks-screenshot.png) |
 
 Each dashboard folder contains the Grafana JSON file and a README with import instructions and the required n8n environment variables.
 
