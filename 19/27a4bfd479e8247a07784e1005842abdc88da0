@@ -1,0 +1,19 @@
+mocks/n8n-system-tasks/system-task-metrics-exporter.py
+  s_256b183018736a::t_27da99fa2d70a2 28,100-103,128,151-156,183,186,189,191,196-209,271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1927a4bfd479e8247a07784e1005842abdc88da0",
+  "prompts": {},
+  "sessions": {
+    "s_256b183018736a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb841562-62be-44f3-8a99-3752a156d0d6",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    }
+  }
+}
