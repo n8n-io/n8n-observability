@@ -25,6 +25,7 @@ import argparse
 import math
 import random
 import time
+from collections import namedtuple
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # Must match DURATION_BUCKETS_SECONDS and LAG_BUCKETS_SECONDS in
@@ -96,6 +97,10 @@ class Histogram:
         out.append(f"{name}_count{{{labels}}} {self.total:.4f}")
 
 
+# A run in progress: its effects land at `end`, not when it started.
+Run = namedtuple("Run", "end instance result duration retried")
+
+
 class TaskState:
     """One system task's timeline, fired occurrence by occurrence from real elapsed time."""
 
@@ -120,7 +125,7 @@ class TaskState:
         self.last_success = {i: seeded for i in self.owners}
 
         self.runs = {i: {} for i in self.owners}          # instance -> (result) -> Histogram
-        self.in_flight = []                               # end timestamps of running occurrences
+        self.in_flight = []                               # Runs started but not settled yet
         self.skipped = {i: {} for i in self.owners}       # instance -> reason -> count
         self.retries = {i: 0.0 for i in self.owners}
         self.provision_check_failures = {i: 0.0 for i in self.owners}
@@ -143,12 +148,12 @@ class TaskState:
     def advance(self, wall: float):
         # A dead task keeps the occurrence it was armed for when it stopped being
         # scheduled, so its next-run countdown falls past zero instead of moving.
-        if self.dead:
-            return
-        while self.next_fire <= wall:
-            if not self.absent:
-                self._fire(self.next_fire)
-            self.next_fire += self.interval
+        if not self.dead:
+            while self.next_fire <= wall:
+                if not self.absent:
+                    self._fire(self.next_fire)
+                self.next_fire += self.interval
+        self._settle(wall)
 
     def _fire(self, due: float):
         instance = self._owner()
@@ -175,22 +180,33 @@ class TaskState:
         duration = max(0.001, random.lognormvariate(math.log(self.duration), 0.5))
         if random.random() < self.fail_rate:
             result = "failure"
-            if random.random() < 0.8:
-                self.retries[instance] += 1
+            retried = random.random() < 0.8
         elif random.random() < 0.006:
             result = "aborted"
+            retried = False
         else:
             result = "success"
-            self.last_success[instance] = due + duration
+            retried = False
 
-        self._run_histogram(instance, result).observe(duration)
-        self.in_flight.append(due + duration)
+        self.in_flight.append(Run(due + duration, instance, result, duration, retried))
 
         if not self.durable and random.random() < 0.002:
             self.provision_check_failures[instance] += 1
 
-    def running_now(self, wall: float) -> int:
-        self.in_flight = [end for end in self.in_flight if end > wall]
+    def _settle(self, wall: float):
+        # A run is only finished once its duration has elapsed. Recording its
+        # outcome at fire time would count it as in flight and as finished at the
+        # same time, and would date its success in the future.
+        finished = [run for run in self.in_flight if run.end <= wall]
+        self.in_flight = [run for run in self.in_flight if run.end > wall]
+        for run in sorted(finished, key=lambda run: run.end):
+            self._run_histogram(run.instance, run.result).observe(run.duration)
+            if run.result == "success":
+                self.last_success[run.instance] = run.end
+            if run.retried:
+                self.retries[run.instance] += 1
+
+    def running_now(self) -> int:
         return len(self.in_flight)
 
 
@@ -252,7 +268,7 @@ class SystemTaskState:
                "Number of system task runs currently in flight on this instance, by task and mode.",
                "gauge")
         for t in self.tasks:
-            running = t.running_now(wall)
+            running = t.running_now()
             for idx, i in enumerate(t.owners):
                 share = running // len(t.owners) + (1 if idx < running % len(t.owners) else 0)
                 out.append(f'{p}system_task_runs_in_flight{{instance="{i}",task="{t.name}",'
