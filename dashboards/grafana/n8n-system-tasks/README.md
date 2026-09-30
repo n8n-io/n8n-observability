@@ -39,7 +39,7 @@ from its header, and that one links back here.
 ## How to read it
 
 1. Look at the four tiles. **Late Tasks**, **Unscheduled Tasks** and **Failed Runs** are green at 0. Anything else is red.
-2. If a tile is red, find the task in the **Tasks** table. The table puts the latest task first.
+2. If a tile is red, find the task in the **Tasks** table. The table puts the most overdue task first (highest late factor).
 3. Expand **Troubleshooting** only to find why a task is late or failing.
 
 ## Panels
