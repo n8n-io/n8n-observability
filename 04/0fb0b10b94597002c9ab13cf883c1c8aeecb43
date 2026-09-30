@@ -1,0 +1,19 @@
+dashboards/grafana/n8n-system-tasks/n8n-system-tasks.json
+  s_73d9ddf7271b4d::t_739517bc981ac2 302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "040fb0b10b94597002c9ab13cf883c1c8aeecb43",
+  "prompts": {},
+  "sessions": {
+    "s_73d9ddf7271b4d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f36f3a79-75b8-4463-868c-950dd781795c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    }
+  }
+}
