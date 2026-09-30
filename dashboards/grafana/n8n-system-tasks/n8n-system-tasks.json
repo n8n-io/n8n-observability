@@ -313,7 +313,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max by (task, mode) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"})",
+          "expr": "max by (task, mode) (label_replace(n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}, \"mode\", \"leader_timer\", \"mode\", \"in_memory\"))",
           "instant": true,
           "range": false,
           "format": "table"
