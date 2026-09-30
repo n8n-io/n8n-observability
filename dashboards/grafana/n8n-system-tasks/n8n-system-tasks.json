@@ -299,7 +299,7 @@
       "id": 5,
       "type": "table",
       "title": "Tasks",
-      "description": "One row for each system task, sorted with the most overdue task first (highest late factor).\n\n* Runs on: the durable scheduler, a timer on the leader main, or a timer on every instance.\n* Last success: the most recent success on any main in the last 2 days. A restart does not reset it.\n* Late factor: last success age divided by the interval. 1 is normal. 2 or more means the task missed a run.\n* Runs and Failures: counts in the selected time range. A daily task often shows 0 runs, so read Last success first.",
+      "description": "One row for each system task, sorted with the most overdue task first (highest late factor).\n\n* Runs on: the durable scheduler, a timer on the leader main, or a timer on every instance.\n* Last success: the most recent success on any main in the last 2 days. A restart does not reset it.\n* Late factor: last success age divided by the interval. 1 is normal. 2 or more means the task missed a run.\n* Runs and Failures: counts in the selected time range. A daily task often shows 0 runs, so read Last success first.\n\nBad when: a cell is red.",
       "gridPos": {
         "x": 0,
         "y": 4,
