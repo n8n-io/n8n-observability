@@ -122,7 +122,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "count((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) > 2) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d])))) or vector(0)",
+          "expr": "count((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) > 2) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) or on (task) (((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}))) or vector(0)",
           "instant": true,
           "range": false
         }
@@ -334,7 +334,7 @@
         },
         {
           "refId": "D",
-          "expr": "((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) or on (task) ((max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) * 0 + 1000000000)",
+          "expr": "((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) or on (task) ((max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) * 0 + 1000000000) or on (task) ((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) * 0 + 1000000000)",
           "instant": true,
           "range": false,
           "format": "table"
