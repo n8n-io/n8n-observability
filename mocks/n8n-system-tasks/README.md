@@ -13,12 +13,12 @@ covers:
 
 | Task | What it demonstrates |
 |------|----------------------|
-| `mcp-registry-refresh` | A task that stopped being scheduled. It lights up **Tasks Not Scheduled**, climbs on **Overdue Factor**, and falls past zero on **Time to Next Run**, because it keeps the occurrence it was armed for when it stopped |
-| `workflow-history-compaction-optimize` | A task with no recorded success yet, as just after a leader takeover. This is the purple line on **Overdue Factor** |
+| `mcp-registry-refresh` | A task that stopped being scheduled. It lights up **Unscheduled Tasks** and **Late Tasks**, turns red in the **Tasks** table, and falls past zero on **Time to Next Run**, because it keeps the occurrence it was armed for when it stopped |
+| `workflow-history-compaction-optimize` | A task with no recorded success. It shows **None in 2 days** in the **Tasks** table and counts in **Late Tasks** |
 | `insights-pruning` | Fails a quarter of its runs and schedules retries |
 | `workflow-history-compaction-trim` | Runs long enough to skip occurrences as `overlap`, plus the odd `coalesced` fire |
 | `publication-outbox-cleanup` | Caught mid-handover to the durable scheduler, so occurrences skip as `provisioned_elsewhere` |
-| `activity-pruning`, `execution-pruning-soft-delete` | Run in `durable` mode, and also emit the durable scheduler's own `n8n_scheduler_*` series as `task_type="system:<name>"` |
+| `activity-pruning`, `execution-pruning-soft-delete` | Run in `durable` mode, show their stored next run on **Time to Next Run**, and also emit the durable scheduler's own `n8n_scheduler_*` series as `task_type="system:<name>"` |
 
 Cadences are compressed to seconds, so a screenshot takes minutes instead of a
 day. `system_task_interval_seconds` reports the compressed cadence, so the overdue
@@ -46,8 +46,7 @@ series:
 ```
 
 As in a real cluster, in-memory series exist only on the leader (`n8n-main-1`),
-which is what the **Leaders per Task** panel reads, while durable series exist on
-every main.
+while durable series exist on every main.
 
 This needs `honor_labels: true` on the Prometheus job (see below). Without it,
 Prometheus overwrites `instance` with the target address and all the mains
@@ -91,8 +90,8 @@ once.
 Open Grafana (http://localhost:3000, admin/admin) → **n8n System Tasks**. Let it
 run 5–10 minutes so the counters build up history, then set the range to **Last 7
 minutes**: long enough for every cadence to repeat, short enough to still see
-individual runs. Expand the collapsed **Leadership & Durable Scheduler** row for
-the leader count and the two durable scheduler panels.
+individual runs. Expand the collapsed **Troubleshooting** row for the duration,
+skip, retry and timer panels.
 
 ## Alternative: real data
 
