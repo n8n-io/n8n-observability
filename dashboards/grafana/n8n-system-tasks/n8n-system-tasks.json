@@ -75,7 +75,7 @@
       "id": 1,
       "type": "stat",
       "title": "Late Tasks",
-      "description": "Tasks that missed at least one run. A task is late when its last success is older than two of its intervals, or when it has no success in the last 2 days.\n\nBad when: above zero. Find the task in the table below.",
+      "description": "Tasks that stopped running. A task is late when its last success is older than two of its intervals, so it shows here about one interval after the first missed run. A task with no success reported in the last 2 days is also late.\n\nBad when: above zero. Find the task in the table below.",
       "gridPos": {
         "x": 0,
         "y": 0,
