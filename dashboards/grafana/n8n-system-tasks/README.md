@@ -36,6 +36,10 @@ To check, open `http://your-n8n-host.com/metrics` and look for
 This dashboard links to the [n8n Durable Scheduler](../n8n-scheduler/) dashboard
 from its header, and that one links back here.
 
+Set the Prometheus datasource's **Scrape interval** in Grafana to match the
+interval Prometheus uses to scrape n8n. The rate charts use this setting to choose
+a window with enough samples.
+
 ## How to read it
 
 1. Look at the four tiles. **Late Tasks**, **Unscheduled Tasks** and **Failed Runs** are green at 0. Anything else is red.
@@ -55,6 +59,12 @@ from its header, and that one links back here.
 | Troubleshooting (collapsed) | Run duration p95, runs in progress, skipped runs, retries, and time to next run | See the tooltip of each panel |
 
 Each panel repeats its **Bad when** note in its tooltip (the ⓘ icon).
+
+**Failed Runs per Task**, **Skipped Runs** and **Retries** count events over a
+trailing `$__rate_interval` window at each point. The windows overlap, so no
+event falls between two points, and one event can show on several neighboring
+points. Use the **Failed Runs** tile and **Tasks** table for totals over the
+selected time range.
 
 ## How "late" is measured
 

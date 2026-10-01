@@ -651,7 +651,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Failed Runs per Task",
-      "description": "Failed runs in each interval, by task. The chart stays empty while every task succeeds.\n\nBad when: one task fails again and again. Read the error in the logs of the main that ran it.",
+      "description": "Failed runs by task, counted over a trailing window that spans several scrapes. The chart stays empty while every task succeeds.\n\nBad when: one task fails again and again. Read the error in the logs of the main that ran it.",
       "gridPos": {
         "x": 0,
         "y": 22,
@@ -667,14 +667,12 @@
           "unit": "short",
           "min": 0,
           "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "lineWidth": 1,
-            "stacking": {
-              "mode": "normal"
-            }
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false,
+            "showPoints": "auto"
           },
-          "decimals": 0,
           "color": {
             "mode": "fixed",
             "fixedColor": "red"
@@ -696,9 +694,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (task) (increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__interval])) > 0",
-          "legendFormat": "{{task}}",
-          "interval": "1m"
+          "expr": "round(sum by (task) (increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__rate_interval]))) > 0",
+          "legendFormat": "{{task}}"
         }
       ]
     },
@@ -813,7 +810,7 @@
           "id": 10,
           "type": "timeseries",
           "title": "Skipped Runs (timers only)",
-          "description": "Runs that came due on a timer but did not start, by task and reason. `overlap`: the previous run was still in progress. `provisioned_elsewhere`: the durable scheduler runs the task. `aborted` and `coalesced` are harmless. Durable tasks never appear here.\n\nBad when: `overlap` is steady. The runs take longer than the interval.",
+          "description": "Skipped runs by task and reason, counted over a trailing window that spans several scrapes. These runs came due on a timer but did not start. `overlap`: the previous run was still in progress. `provisioned_elsewhere`: the durable scheduler runs the task. `aborted` and `coalesced` are harmless. Durable tasks never appear here.\n\nBad when: `overlap` is steady. The runs take longer than the interval.",
           "gridPos": {
             "x": 0,
             "y": 39,
@@ -829,14 +826,12 @@
               "unit": "short",
               "min": 0,
               "custom": {
-                "drawStyle": "bars",
-                "fillOpacity": 80,
-                "lineWidth": 1,
-                "stacking": {
-                  "mode": "normal"
-                }
-              },
-              "decimals": 0
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
             },
             "overrides": []
           },
@@ -854,9 +849,8 @@
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (task, reason) (increase(n8n_system_task_runs_skipped_total{task=~\"$task\", instance=~\"$instance\"}[$__interval])) > 0",
-              "legendFormat": "{{task}} · {{reason}}",
-              "interval": "1m"
+              "expr": "round(sum by (task, reason) (increase(n8n_system_task_runs_skipped_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))) > 0",
+              "legendFormat": "{{task}} · {{reason}}"
             }
           ]
         },
@@ -864,7 +858,7 @@
           "id": 11,
           "type": "timeseries",
           "title": "Retries (timers only)",
-          "description": "Extra attempts after a failed run on a timer, by task. Durable retries are on the Durable Scheduler dashboard.\n\nBad when: retries rise together with Failed Runs per Task.",
+          "description": "Retries after failed timer runs, by task, counted over a trailing window that spans several scrapes. Durable retries are on the Durable Scheduler dashboard.\n\nBad when: retries rise together with Failed Runs per Task.",
           "gridPos": {
             "x": 12,
             "y": 39,
@@ -880,14 +874,12 @@
               "unit": "short",
               "min": 0,
               "custom": {
-                "drawStyle": "bars",
-                "fillOpacity": 80,
-                "lineWidth": 1,
-                "stacking": {
-                  "mode": "normal"
-                }
-              },
-              "decimals": 0
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
             },
             "overrides": []
           },
@@ -905,9 +897,8 @@
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (task) (increase(n8n_system_task_retries_total{task=~\"$task\", instance=~\"$instance\"}[$__interval])) > 0",
-              "legendFormat": "{{task}}",
-              "interval": "1m"
+              "expr": "round(sum by (task) (increase(n8n_system_task_retries_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))) > 0",
+              "legendFormat": "{{task}}"
             }
           ]
         },
