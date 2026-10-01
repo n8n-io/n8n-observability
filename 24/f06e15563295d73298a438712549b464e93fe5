@@ -1,0 +1,31 @@
+dashboards/grafana/n8n-system-tasks/README.md
+  s_b01013ba02e9f7::t_1238899c02ba72 63-67
+  s_b9b314e4c01ab2::t_fe538381ff085f 39-42
+dashboards/grafana/n8n-system-tasks/n8n-system-tasks.json
+  s_b9b314e4c01ab2::t_fe538381ff085f 670-674,698,829-834,853,877-882,901
+  s_b01013ba02e9f7::t_f28d69ee2fcf0c 654,697,813,852,861,900
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "24f06e15563295d73298a438712549b464e93fe5",
+  "prompts": {},
+  "sessions": {
+    "s_b01013ba02e9f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a70fa3c6-a3fb-4e5a-b7ba-5c0a87301b25",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    },
+    "s_b9b314e4c01ab2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f66b-737b-7ce2-897f-3f9bbcaddb29",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Lorent Lempereur <lorent.lempereur@n8n.io>"
+    }
+  }
+}
