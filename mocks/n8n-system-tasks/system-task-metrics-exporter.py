@@ -13,8 +13,7 @@ seconds: `system_task_interval_seconds` reports the compressed cadence, which
 keeps the overdue factor (age of last success / cadence) honest.
 
 --instances N simulates N mains via an `instance` label (n8n-main-1..N). In-memory
-series exist on the leader only (n8n-main-1), which is what the Leaders per Task
-panel reads; durable series exist on every main. Requires `honor_labels: true` on
+series exist on the leader only (n8n-main-1); durable series exist on every main. Requires `honor_labels: true` on
 the Prometheus job.
 
 Usage: ./system-task-metrics-exporter.py [--port 9102] [--prefix n8n_] [--instances 1]
@@ -33,6 +32,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 # exactly like it does against a real instance.
 DURATION_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120, 300, 600]
 LAG_BUCKETS = [0.01, 0.1, 1, 5, 10, 30, 60, 300, 600, 1800, 3600, 21600, 86400]
+SKIP_REASONS = ("overlap", "provisioned_elsewhere", "aborted", "coalesced")
 
 # The 15 system tasks n8n registers today, with cadences compressed for the demo
 # and a typical run duration in seconds.
@@ -113,7 +113,7 @@ class TaskState:
         self.absent = spec.get("absent", False)
         self.fail_rate = spec.get("fail_rate", 0.0)
         self.skips = spec.get("skips", {})
-        self.mode = "durable" if self.durable else "in_memory"
+        self.mode = "durable" if self.durable else "leader_timer"
 
         self.instances = instances
         self.owners = instances if self.durable else instances[:1]
@@ -124,9 +124,13 @@ class TaskState:
         seeded = None if self.absent else wall_start
         self.last_success = {i: seeded for i in self.owners}
 
-        self.runs = {i: {} for i in self.owners}          # instance -> (result) -> Histogram
+        # Like n8n, the success and failure series and the timer skip reasons start
+        # at zero, so `increase()` counts the first one after a restart.
+        self.runs = {i: {r: Histogram(DURATION_BUCKETS) for r in ("success", "failure")}
+                     for i in self.owners}                # instance -> (result) -> Histogram
         self.in_flight = []                               # Runs started but not settled yet
-        self.skipped = {i: {} for i in self.owners}       # instance -> reason -> count
+        self.skipped = {i: {} if self.durable else dict.fromkeys(SKIP_REASONS, 0.0)
+                        for i in self.owners}             # instance -> reason -> count
         self.retries = {i: 0.0 for i in self.owners}
         self.provision_check_failures = {i: 0.0 for i in self.owners}
         self.fire_lag = {i: Histogram(LAG_BUCKETS) for i in self.owners}
@@ -238,9 +242,10 @@ class SystemTaskState:
                            f'mode="{t.mode}"}} 1')
 
         header("system_task_scheduled",
-               "1 while a system task is scheduled to run on this instance, 0 once it stopped "
-               "being scheduled, by task and mode: its in-memory schedule could not be planned, "
-               "or its durable job could not be provisioned.", "gauge")
+               "1 while a system task is scheduled to run, 0 once it stopped being scheduled, "
+               "by task and mode: the schedule of a leader_timer or instance_timer task could not "
+               "be planned on this instance, or no runnable job is stored for a durable task.",
+               "gauge")
         for t in self.tasks:
             for i in t.owners:
                 out.append(f'{p}system_task_scheduled{{instance="{i}",task="{t.name}",'
@@ -255,10 +260,12 @@ class SystemTaskState:
                            f'task="{t.name}"}} {t.interval:.4f}')
 
         header("system_task_next_run_timestamp_seconds",
-               "Unix timestamp in seconds of the next occurrence an in-memory system task is "
-               "armed for on this instance, by task.", "gauge")
+               "Unix timestamp in seconds of the next occurrence of a system task, by task: the "
+               "occurrence a timer is armed for on this instance, or the next run stored for a "
+               "durable task, identical on every main.", "gauge")
         for t in self.tasks:
-            if t.durable:
+            # A durable task whose job is not runnable has no next-run series.
+            if t.durable and t.dead:
                 continue
             for i in t.owners:
                 out.append(f'{p}system_task_next_run_timestamp_seconds{{instance="{i}",'
@@ -285,7 +292,7 @@ class SystemTaskState:
                                f'task="{t.name}",mode="{t.mode}"}} {stamp:.4f}')
 
         header("system_task_run_duration_seconds",
-               "Duration in seconds of a system task run, by task, mode (in_memory, durable) "
+               "Duration in seconds of a system task run, by task, mode (leader_timer, durable) "
                "and result (success, failure, aborted).", "histogram")
         for t in self.tasks:
             for i in t.owners:
@@ -295,8 +302,9 @@ class SystemTaskState:
                                 f'result="{result}"')
 
         header("system_task_runs_skipped_total",
-               "Total number of in-memory system task occurrences that did not run, by task and "
-               "reason (overlap, provisioned_elsewhere, aborted, coalesced).", "counter")
+               "Total number of timer-driven system task occurrences that did not run on this "
+               "instance, by task and reason (overlap, provisioned_elsewhere, aborted, "
+               "coalesced).", "counter")
         for t in self.tasks:
             for i in t.owners:
                 for reason, count in t.skipped[i].items():
@@ -304,11 +312,12 @@ class SystemTaskState:
                                f'task="{t.name}",reason="{reason}"}} {count:.4f}')
 
         header("system_task_retries_total",
-               "Total number of in-memory system task retries scheduled after a failed run, "
-               "by task.", "counter")
+               "Total number of timer-driven system task retries scheduled on this instance "
+               "after a failed run, by task.", "counter")
         for t in self.tasks:
+            if t.durable:
+                continue
             for i in t.owners:
-                if t.retries[i]:
                     out.append(f'{p}system_task_retries_total{{instance="{i}",'
                                f'task="{t.name}"}} {t.retries[i]:.4f}')
 

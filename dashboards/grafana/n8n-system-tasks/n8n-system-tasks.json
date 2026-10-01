@@ -1,16 +1,17 @@
 {
   "uid": "n8n-system-tasks",
   "title": "n8n System Tasks",
+  "description": "Is every n8n system task running? Late or failing tasks show in red.",
   "tags": [
     "n8n",
     "system-tasks"
   ],
-  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "auto",
+  "refresh": "1m",
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "links": [
@@ -73,65 +74,10 @@
     {
       "id": 1,
       "type": "stat",
-      "title": "Tasks Not Scheduled",
-      "description": "Tasks that n8n failed to schedule, so nothing will trigger them any more.\n\nWhen bad: above zero, that task will not run again until the main restarts or leadership moves. Find it on Overdue Factor, then read the main's logs for the scheduling error.",
+      "title": "Late Tasks",
+      "description": "Tasks that stopped running. A task is late when its last success is older than two of its intervals, so it shows here about one interval after the first missed run. A task with no success reported in the last 2 days is also late.\n\nBad when: above zero. Find the task in the table below.",
       "gridPos": {
         "x": 0,
-        "y": 0,
-        "w": 4,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "min": 0
-        }
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "textMode": "auto",
-        "colorMode": "background"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "count(min by (task, mode) (n8n_system_task_scheduled{task=~\"$task\", instance=~\"$instance\"}) == 0) or vector(0)",
-          "legendFormat": "Tasks not scheduled"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "type": "stat",
-      "title": "Most Overdue Task",
-      "description": "The task whose last success is furthest behind, counted in that task's own cadences. 1 means one cadence has passed, which is normal. 2 means it missed a full occurrence.\n\nWhen bad: above 2 the task missed at least one run. Above 3 and still rising, it has stopped. Check Tasks Not Scheduled, then Runs per Task for failures and Skipped Occurrences for overlap.",
-      "gridPos": {
-        "x": 4,
         "y": 0,
         "w": 6,
         "h": 4
@@ -142,8 +88,9 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "decimals": 1,
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
           "color": {
             "mode": "thresholds"
           },
@@ -155,16 +102,11 @@
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 1.5
-              },
-              {
                 "color": "red",
-                "value": 3
+                "value": 1
               }
             ]
-          },
-          "min": 0
+          }
         }
       },
       "options": {
@@ -173,27 +115,28 @@
             "lastNotNull"
           ]
         },
-        "textMode": "value_and_name",
-        "colorMode": "background"
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none"
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "topk(1, (time() - max by (task) (n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"})) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}))",
-          "legendFormat": "{{task}}",
-          "instant": true
+          "expr": "count((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) > 2) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) or on (task) (((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}))) or vector(0)",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
-      "id": 5,
+      "id": 2,
       "type": "stat",
-      "title": "Runs Finished",
-      "description": "How many system task runs finished in the selected range, successes and failures together. Runs that stopped cleanly at shutdown or leader handover are left out.\n\nWhen bad: if the total barely grows as you widen the range, the tasks are not running. Check Tasks Not Scheduled first, then Overdue Factor.",
+      "title": "Unscheduled Tasks",
+      "description": "Tasks that n8n could not schedule. A timer task stays stopped until a main restarts. A durable task counts here when its stored job is disabled, quarantined or missing.\n\nBad when: above zero. For a timer task, read the logs of the mains for the scheduling error. For a durable task, check its row in `scheduled_job`.",
       "gridPos": {
-        "x": 10,
+        "x": 6,
         "y": 0,
-        "w": 5,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -204,6 +147,7 @@
         "defaults": {
           "unit": "short",
           "decimals": 0,
+          "min": 0,
           "color": {
             "mode": "thresholds"
           },
@@ -211,12 +155,15 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
               }
             ]
-          },
-          "min": 0
+          }
         }
       },
       "options": {
@@ -225,26 +172,28 @@
             "lastNotNull"
           ]
         },
-        "textMode": "auto",
-        "colorMode": "value"
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none"
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=~\"success|failure\"}[$__range])) or vector(0)",
-          "legendFormat": "Runs finished"
+          "expr": "count(min by (task, mode) (n8n_system_task_scheduled{task=~\"$task\", instance=~\"$instance\"}) == 0) or vector(0)",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
       "id": 3,
       "type": "stat",
-      "title": "Run Failure Rate",
-      "description": "Share of finished runs that failed over the selected range. Runs that stopped cleanly at shutdown or leader handover are ignored.\n\nWhen bad: above about 1%, a task is erroring. Break it down on Runs per Task. One task points at that task's own dependency; every task points at the database or the host.",
+      "title": "Failed Runs",
+      "description": "Runs that failed in the selected time range. A run that stops at shutdown is not a failure.\n\nBad when: above zero. Find the task on Failed Runs per Task, then read its error in the logs.",
       "gridPos": {
-        "x": 15,
+        "x": 12,
         "y": 0,
-        "w": 5,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -253,7 +202,9 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
           "color": {
             "mode": "thresholds"
           },
@@ -265,17 +216,11 @@
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 0.01
-              },
-              {
                 "color": "red",
-                "value": 0.1
+                "value": 1
               }
             ]
-          },
-          "min": 0,
-          "max": 1
+          }
         }
       },
       "options": {
@@ -284,26 +229,28 @@
             "lastNotNull"
           ]
         },
-        "textMode": "auto",
-        "colorMode": "background"
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none"
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(sum(increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__range])) or vector(0)) / clamp_min(sum(increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=~\"success|failure\"}[$__range])), 1)",
-          "legendFormat": "Run Failure Rate"
+          "expr": "sum(increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__range])) or vector(0)",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "Runs In Flight",
-      "description": "System task runs happening right now, across every task.\n\nWhen bad: a value that stays above zero for longer than that task's Run Duration p95 is a hung run. Its next occurrences appear on Skipped Occurrences as `overlap`.",
+      "title": "Tasks Reporting",
+      "description": "System tasks that the mains report now.\n\nBad when: lower than usual. A task that is missing from this count is not monitored.",
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 0,
-        "w": 4,
+        "w": 6,
         "h": 4
       },
       "datasource": {
@@ -314,6 +261,7 @@
         "defaults": {
           "unit": "short",
           "decimals": 0,
+          "min": 0,
           "color": {
             "mode": "thresholds"
           },
@@ -321,12 +269,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
+                "color": "blue",
                 "value": null
               }
             ]
-          },
-          "min": 0
+          }
         }
       },
       "options": {
@@ -335,711 +282,403 @@
             "lastNotNull"
           ]
         },
-        "textMode": "auto",
-        "colorMode": "value"
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none"
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(n8n_system_task_runs_in_flight{task=~\"$task\", instance=~\"$instance\"}) or vector(0)",
-          "legendFormat": "Runs in flight"
+          "expr": "count(max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"})) or vector(0)",
+          "instant": true,
+          "range": false
         }
       ]
     },
     {
-      "id": 10,
-      "type": "timeseries",
-      "title": "Overdue Factor \u2014 Age of Last Success \u00f7 Cadence",
-      "description": "How far each task's last success has fallen behind, counted in that task's own cadences. 1 is normal, 2 means a full occurrence was missed. The same thresholds work for a task that runs every 30 seconds and one that runs daily.\n\nA purple line at 1 on the right axis means the task is registered but has no recorded success. Expect this for a few minutes after a failover.\n\nWhen bad: a line above 2 missed an occurrence; above 3 and rising, the task has stopped. A purple line that lasts longer than one cadence means the task has never completed since the current leader took over.",
+      "id": 5,
+      "type": "table",
+      "title": "Tasks",
+      "description": "One row for each system task, sorted with the most overdue task first (highest late factor).\n\n* Runs on: the durable scheduler, a timer on the leader main, or a timer on every instance.\n* Last success: the most recent success on any main in the last 2 days. A restart does not reset it.\n* Late factor: last success age divided by the interval. 1 is normal. 2 or more means the task missed a run.\n* Runs and Failures: counts in the selected time range. A daily task often shows 0 runs, so read Last success first.\n\nBad when: a cell is red.",
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 12,
-        "h": 9
+        "w": 24,
+        "h": 18
       },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (task, mode) (label_replace(n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}, \"mode\", \"leader_timer\", \"mode\", \"in_memory\"))",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) or on (task) ((max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) * 0 + 1000000000) or on (task) ((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) * 0 + 1000000000)",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "sum by (task) (increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"success\"}[$__range])) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) * 0)",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "F",
+          "expr": "sum by (task) (increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__range])) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) * 0)",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "G",
+          "expr": "min by (task) (n8n_system_task_scheduled{task=~\"$task\", instance=~\"$instance\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value #A": true
+            },
+            "indexByName": {
+              "task": 0,
+              "mode": 1,
+              "Value #G": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #E": 6,
+              "Value #F": 7
+            },
+            "renameByName": {
+              "task": "Task",
+              "mode": "Runs on",
+              "Value #G": "Scheduled",
+              "Value #B": "Interval",
+              "Value #C": "Last success",
+              "Value #D": "Late factor",
+              "Value #E": "Runs",
+              "Value #F": "Failures"
+            }
+          }
+        }
+      ],
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "min": 0,
-          "decimals": 2,
           "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "spanNulls": false,
-            "showPoints": "auto",
-            "axisLabel": "cadences",
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 2
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
+            "align": "auto",
+            "filterable": false
           }
         },
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "/no success recorded$/"
+              "id": "byName",
+              "options": "Task"
             },
             "properties": [
               {
-                "id": "color",
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Runs on"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "durable": {
+                        "text": "Durable scheduler",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "leader_timer": {
+                        "text": "Leader timer",
+                        "color": "text",
+                        "index": 1
+                      },
+                      "in_memory": {
+                        "text": "Leader timer",
+                        "color": "text",
+                        "index": 2
+                      },
+                      "instance_timer": {
+                        "text": "Every instance",
+                        "color": "text",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Scheduled"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Yes",
+                        "color": "transparent",
+                        "index": 0
+                      },
+                      "0": {
+                        "text": "No",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "purple"
+                  "type": "color-background",
+                  "mode": "basic"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Interval"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last success"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
               },
               {
-                "id": "custom.axisPlacement",
-                "value": "right"
+                "id": "decimals",
+                "value": 0
               },
               {
-                "id": "custom.axisLabel",
-                "value": "absent (1 = yes)"
-              },
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "special",
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "text": "None in 2 days",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Late factor"
+            },
+            "properties": [
               {
-                "id": "custom.axisSoftMax",
+                "id": "decimals",
                 "value": 1
               },
               {
-                "id": "custom.drawStyle",
-                "value": "line"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 15
-              },
-              {
-                "id": "custom.thresholdsStyle",
+                "id": "thresholds",
                 "value": {
-                  "mode": "off"
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 2
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
                 }
               },
               {
-                "id": "custom.lineStyle",
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "range",
+                    "options": {
+                      "from": 1000000000.0,
+                      "to": null,
+                      "result": {
+                        "text": "No success",
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
                 "value": {
-                  "fill": "dash",
-                  "dash": [
-                    8,
-                    6
-                  ]
+                  "type": "color-background",
+                  "mode": "basic"
                 }
               }
             ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ],
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(time() - max by (task) (n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"})) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})",
-          "legendFormat": "{{task}}"
-        },
-        {
-          "refId": "B",
-          "expr": "max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"} unless on (task) n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"})",
-          "legendFormat": "{{task}} \u2014 no success recorded"
-        }
-      ]
-    },
-    {
-      "id": 11,
-      "type": "timeseries",
-      "title": "Time to Next Run \u2014 In-Memory Timers",
-      "description": "Seconds until the occurrence each in-memory timer is armed for. A timer re-arms itself the moment it fires, so a healthy task draws a sawtooth whose peaks are its own cadence, whatever its runs cost. Durable tasks have no armed timer and never appear here.\n\nWhen bad: a line that crosses zero and keeps falling is armed for a moment in the past, so it will never fire: the timer stopped planning. Check Tasks Not Scheduled, then the leader's logs. A brief dip below zero is only fire lag.",
-      "gridPos": {
-        "x": 12,
-        "y": 4,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "spanNulls": false,
-            "showPoints": "auto",
-            "axisSoftMin": 0,
-            "thresholdsStyle": {
-              "mode": "dashed"
-            }
           },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Runs"
+            },
+            "properties": [
               {
-                "color": "transparent",
-                "value": null
-              },
-              {
-                "color": "red",
+                "id": "decimals",
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failures"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "transparent",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Late factor",
+            "desc": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Failed Runs per Task",
+      "description": "Failed runs by task, counted over a trailing window that spans several scrapes. The chart stays empty while every task succeeds.\n\nBad when: one task fails again and again. Read the error in the logs of the main that ran it.",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false,
+            "showPoints": "auto"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
           }
         },
         "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "lastNotNull",
-            "min"
-          ],
-          "sortBy": "Last *",
-          "sortDesc": false
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "asc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "max by (task) (n8n_system_task_next_run_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}) - time()",
-          "legendFormat": "{{task}}"
-        }
-      ]
-    },
-    {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Runs per Task & Outcome",
-      "description": "Finished runs per second, split by task and outcome. The height of the stack is total throughput. A run that stops cleanly at shutdown or leader handover shows as `aborted` and is not a failure.\n\nWhen bad: red on one task points at that task's own dependency; red on all of them points at the database or the host. A task whose stack disappears has stopped running: check Tasks Not Scheduled.",
-      "gridPos": {
-        "x": 0,
-        "y": 13,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "spanNulls": false,
-            "showPoints": "auto",
-            "stacking": {
-              "mode": "normal",
-              "group": "A"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/failure$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/aborted$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (task, result) (rate(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{task}} \u00b7 {{result}}"
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Run Duration \u2014 p50 / p95",
-      "description": "How long each task's runs take.\n\nWhen bad: p95 close to the task's own cadence means the next occurrence will overlap and be skipped; confirm on Skipped Occurrences. A p95 pinned at 10 minutes, the highest value this panel can show, means runs are effectively hung.",
-      "gridPos": {
-        "x": 12,
-        "y": 13,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "spanNulls": false,
-            "showPoints": "auto"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/p50$/"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    8,
-                    6
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "histogram_quantile(0.5, sum by (le, task) (rate(n8n_system_task_run_duration_seconds_bucket{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{task}} p50"
-        },
-        {
-          "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le, task) (rate(n8n_system_task_run_duration_seconds_bucket{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{task}} p95"
-        }
-      ]
-    },
-    {
-      "id": 14,
-      "type": "timeseries",
-      "title": "Skipped Occurrences",
-      "description": "Occurrences that came due but did not run, and why. `overlap` means the previous run was still going. `provisioned_elsewhere` means the durable scheduler owns the task. `aborted` means the occurrence fired during a leader handover. `coalesced` means the process slept through several occurrences and they merged into one late run. Only `overlap` is a problem.\n\nWhen bad: steady `overlap` means runs take longer than their cadence; compare with Run Duration p95. Steady `coalesced` means the host suspends, or the event loop is blocked.",
-      "gridPos": {
-        "x": 0,
-        "y": 22,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "spanNulls": false,
-            "showPoints": "auto",
-            "stacking": {
-              "mode": "normal",
-              "group": "A"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/overlap$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "orange"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/provisioned_elsewhere$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "purple"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/aborted$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/coalesced$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "super-light-blue"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (task, reason) (rate(n8n_system_task_runs_skipped_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{task}} \u00b7 {{reason}}"
-        }
-      ]
-    },
-    {
-      "id": 15,
-      "type": "timeseries",
-      "title": "Timer Fire Lag \u2014 p50 / p99",
-      "description": "How late each task starts, measured from the moment its occurrence was due.\n\nWhen bad: p50 above a second means the event loop is blocked. A p99 in hours means the host was suspended or is overloaded, and lines up with `coalesced` on Skipped Occurrences.",
-      "gridPos": {
-        "x": 12,
-        "y": 22,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 5,
-            "spanNulls": false,
-            "showPoints": "auto"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/p50$/"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    8,
-                    6
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "histogram_quantile(0.5, sum by (le, task) (rate(n8n_system_task_fire_lag_seconds_bucket{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{task}} p50"
-        },
-        {
-          "refId": "B",
-          "expr": "histogram_quantile(0.99, sum by (le, task) (rate(n8n_system_task_fire_lag_seconds_bucket{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "{{task}} p99"
-        }
-      ]
-    },
-    {
-      "id": 16,
-      "type": "timeseries",
-      "title": "Retries & Provision-Check Failures",
-      "description": "Retries are extra attempts after a failed run. A provision-check failure means n8n could not tell whether the durable scheduler owns the task, so it ran the task itself. That is the safe fallback, but it means a durable task could run twice.\n\nWhen bad: retries rising together with red on Runs per Task means a task keeps failing. Any provision-check failure points at the scheduler tables or the database connection: check the Durable Scheduler row.",
-      "gridPos": {
-        "x": 0,
-        "y": 31,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "spanNulls": false,
-            "showPoints": "auto"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/provision-check failures$/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "orange"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (task) (rate(n8n_system_task_retries_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{task}} retries"
-        },
-        {
-          "refId": "B",
-          "expr": "sum by (task) (rate(n8n_system_task_provision_check_failures_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{task}} provision-check failures"
-        }
-      ]
-    },
-    {
-      "id": 17,
-      "type": "timeseries",
-      "title": "Mode Split \u2014 In-Memory vs Durable",
-      "description": "Runs per second by the path each run took: a timer on the leader main, or the durable scheduler. Every system task runs on a timer today, so `durable` stays flat at zero until system tasks are made durable.\n\nWhen bad: if both modes carry the same task at once, two paths are running it. Look for `provisioned_elsewhere` on Skipped Occurrences, which is how the timer is meant to stand down.",
-      "gridPos": {
-        "x": 12,
-        "y": 31,
-        "w": 12,
-        "h": 9
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "min": 0,
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 20,
-            "spanNulls": false,
-            "showPoints": "auto",
-            "stacking": {
-              "mode": "normal",
-              "group": "A"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "in_memory"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "durable"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              }
-            ]
-          }
-        ]
       },
       "options": {
         "legend": {
@@ -1055,33 +694,33 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (mode) (rate(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{mode}}"
+          "expr": "round(sum by (task) (increase(n8n_system_task_run_duration_seconds_count{task=~\"$task\", instance=~\"$instance\", result=\"failure\"}[$__rate_interval]))) > 0",
+          "legendFormat": "{{task}}"
         }
       ]
     },
     {
-      "id": 20,
+      "id": 7,
       "type": "row",
+      "title": "Troubleshooting",
       "collapsed": true,
-      "title": "Leadership & Durable Scheduler (who runs each task?)",
       "gridPos": {
         "x": 0,
-        "y": 40,
+        "y": 30,
         "w": 24,
         "h": 1
       },
       "panels": [
         {
-          "id": 21,
+          "id": 8,
           "type": "timeseries",
-          "title": "Leaders per Task",
-          "description": "How many mains are running each task. Exactly one main leads, so every line should sit at 1.\n\nWhen bad: 2 means two mains believe they lead, so the task runs twice; check leader election and clock skew. 0 means no main is running it, which is a gap in coverage rather than a quiet period.",
+          "title": "Run Duration p95",
+          "description": "How long runs take, by task.\n\nBad when: p95 is near the interval of the task. The next run then overlaps or is skipped.",
           "gridPos": {
             "x": 0,
-            "y": 41,
-            "w": 8,
-            "h": 9
+            "y": 31,
+            "w": 12,
+            "h": 8
           },
           "datasource": {
             "type": "prometheus",
@@ -1089,121 +728,16 @@
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "short",
-              "decimals": 0,
+              "unit": "s",
               "min": 0,
               "custom": {
                 "lineWidth": 2,
-                "fillOpacity": 0,
+                "fillOpacity": 10,
                 "spanNulls": false,
-                "showPoints": "auto",
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "transparent",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 2
-                  }
-                ]
+                "showPoints": "never"
               }
             },
             "overrides": []
-          },
-          "options": {
-            "legend": {
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true,
-              "calcs": [
-                "lastNotNull",
-                "max"
-              ],
-              "sortBy": "Last *",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "targets": [
-            {
-              "refId": "A",
-              "expr": "count by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\", mode=\"in_memory\"}) or (count by (task) (max_over_time(n8n_system_task_info{task=~\"$task\", instance=~\"$instance\", mode=\"in_memory\"}[$__range])) * 0)",
-              "legendFormat": "{{task}}"
-            }
-          ]
-        },
-        {
-          "id": 22,
-          "type": "timeseries",
-          "title": "Durable Scheduler \u2014 System Task Outcomes",
-          "description": "The durable scheduler's own view of system task runs. Needs `N8N_METRICS_INCLUDE_SCHEDULER_METRICS=true`.\n\nEmpty is the expected reading today, because no system task is durable yet.\n\nWhen bad: failures here while Runs per Task stays green mean the task fails before its handler runs. Open the Durable Scheduler dashboard.",
-          "gridPos": {
-            "x": 8,
-            "y": 41,
-            "w": 8,
-            "h": 9
-          },
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "unit": "ops",
-              "min": 0,
-              "custom": {
-                "lineWidth": 2,
-                "fillOpacity": 20,
-                "spanNulls": false,
-                "showPoints": "auto",
-                "stacking": {
-                  "mode": "normal",
-                  "group": "A"
-                }
-              }
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "success"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "mode": "fixed",
-                      "fixedColor": "green"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "failure"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "mode": "fixed",
-                      "fixedColor": "red"
-                    }
-                  }
-                ]
-              }
-            ]
           },
           "options": {
             "legend": {
@@ -1219,21 +753,21 @@
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (result) (rate(n8n_scheduler_tasks_completed_total{task_type=~\"system:.*\", instance=~\"$instance\"}[$__rate_interval]))",
-              "legendFormat": "{{result}}"
+              "expr": "histogram_quantile(0.95, sum by (le, task) (rate(n8n_system_task_run_duration_seconds_bucket{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval])))",
+              "legendFormat": "{{task}}"
             }
           ]
         },
         {
-          "id": 23,
+          "id": 9,
           "type": "timeseries",
-          "title": "Durable Scheduler \u2014 System Task Dispatch Lag p50 / p99",
-          "description": "How late the durable scheduler starts a task, measured from the moment its occurrence was due. Needs `N8N_METRICS_INCLUDE_SCHEDULER_METRICS=true`.\n\nEmpty is the expected reading today, because no system task is durable yet.\n\nWhen bad: p99 rising while p50 stays low means some occurrences are stuck on lease contention or database locks. Open the Durable Scheduler dashboard and compare with the other task types.",
+          "title": "Runs in Progress",
+          "description": "Runs that are in progress now, by task.\n\nBad when: a task stays above zero for longer than its p95 duration. That run is stuck.",
           "gridPos": {
-            "x": 16,
-            "y": 41,
-            "w": 8,
-            "h": 9
+            "x": 12,
+            "y": 31,
+            "w": 12,
+            "h": 8
           },
           "datasource": {
             "type": "prometheus",
@@ -1241,11 +775,60 @@
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "s",
+              "unit": "short",
               "min": 0,
               "custom": {
                 "lineWidth": 2,
-                "fillOpacity": 5,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "never"
+              },
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (task) (n8n_system_task_runs_in_flight{task=~\"$task\", instance=~\"$instance\"}) > 0",
+              "legendFormat": "{{task}}"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "Skipped Runs (timers only)",
+          "description": "Skipped runs by task and reason, counted over a trailing window that spans several scrapes. These runs came due on a timer but did not start. `overlap`: the previous run was still in progress. `provisioned_elsewhere`: the durable scheduler runs the task. `aborted` and `coalesced` are harmless. Durable tasks never appear here.\n\nBad when: `overlap` is steady. The runs take longer than the interval.",
+          "gridPos": {
+            "x": 0,
+            "y": 39,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
                 "spanNulls": false,
                 "showPoints": "auto"
               }
@@ -1266,13 +849,103 @@
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.5, sum by (le) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"system:.*\", instance=~\"$instance\"}[$__rate_interval])))",
-              "legendFormat": "p50"
+              "expr": "round(sum by (task, reason) (increase(n8n_system_task_runs_skipped_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))) > 0",
+              "legendFormat": "{{task}} · {{reason}}"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Retries (timers only)",
+          "description": "Retries after failed timer runs, by task, counted over a trailing window that spans several scrapes. Durable retries are on the Durable Scheduler dashboard.\n\nBad when: retries rise together with Failed Runs per Task.",
+          "gridPos": {
+            "x": 12,
+            "y": 39,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "lineWidth": 2,
+                "spanNulls": false,
+                "showPoints": "auto"
+              }
             },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
             {
-              "refId": "B",
-              "expr": "histogram_quantile(0.99, sum by (le) (rate(n8n_scheduler_dispatch_lag_seconds_bucket{task_type=~\"system:.*\", instance=~\"$instance\"}[$__rate_interval])))",
-              "legendFormat": "p99"
+              "refId": "A",
+              "expr": "round(sum by (task) (increase(n8n_system_task_retries_total{task=~\"$task\", instance=~\"$instance\"}[$__rate_interval]))) > 0",
+              "legendFormat": "{{task}}"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "Time to Next Run",
+          "description": "Time until the next run of each task. A healthy task draws a sawtooth. Durable tasks show their stored next run on n8n versions that export it. On older versions only timer tasks appear here.\n\nBad when: a line goes below zero and stays there. That task stopped. A durable task whose job is disabled leaves this chart instead, and counts in Unscheduled Tasks.",
+          "gridPos": {
+            "x": 0,
+            "y": 47,
+            "w": 24,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "min": null,
+              "custom": {
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "spanNulls": false,
+                "showPoints": "never"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (task) (n8n_system_task_next_run_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}) - time()",
+              "legendFormat": "{{task}}"
             }
           ]
         }
