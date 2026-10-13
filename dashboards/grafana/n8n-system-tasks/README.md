@@ -50,7 +50,7 @@ a window with enough samples.
 
 | Panel | Shows | Bad when |
 |-------|-------|----------|
-| Late Tasks | Tasks whose last success is older than two of their intervals, or that have no success in 2 days | Above zero |
+| Late Tasks | Tasks whose last success is older than two of their intervals (the interval counts as at least 60 seconds), or that have no success in 2 days | Above zero |
 | Unscheduled Tasks | Tasks that n8n could not schedule, and durable tasks whose stored job is disabled, quarantined or missing | Above zero. A timer task stays stopped until a main restarts: read the logs of the mains. For a durable task, check its row in `scheduled_job` |
 | Failed Runs | Failed runs in the selected time range | Above zero |
 | Tasks Reporting | System tasks that the mains report now | Lower than usual. A missing task is not monitored |
@@ -69,9 +69,11 @@ selected time range.
 ## How "late" is measured
 
 `n8n_system_task_interval_seconds` gives the interval of each task. The **late
-factor** is the age of the last success divided by that interval. 1 is normal.
-2 or more means the task missed a run. One threshold then works for a task that
-runs every 30 seconds and for a task that runs once a day.
+factor** is the age of the last success divided by that interval, with the
+interval raised to at least 60 seconds. 1 is normal. 2 or more means the task
+missed a run. One threshold then works for a task that runs every 5 seconds and
+for a task that runs once a day. The 60-second floor keeps a task that runs
+more often than Prometheus scrapes from looking late between two scrapes.
 
 The last success is the most recent one on any main **in the last 2 days**
 (`max_over_time(...[2d])`). The gauge lives in the memory of each process, so a

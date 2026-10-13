@@ -75,7 +75,7 @@
       "id": 1,
       "type": "stat",
       "title": "Late Tasks",
-      "description": "Tasks that stopped running. A task is late when its last success is older than two of its intervals, so it shows here about one interval after the first missed run. A task with no success reported in the last 2 days is also late.\n\nBad when: above zero. Find the task in the table below.",
+      "description": "Tasks that stopped running. A task is late when its last success is older than two of its intervals, with the interval counted as at least 60 seconds. A task with no success reported in the last 2 days is also late.\n\nBad when: above zero. Find the task in the table below.",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -122,7 +122,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "count((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) > 2) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) or on (task) (((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}))) or vector(0)",
+          "expr": "count((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / clamp_min(max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}), 60)) > 2) or on (task) (max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) or on (task) (((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}))) or vector(0)",
           "instant": true,
           "range": false
         }
@@ -299,7 +299,7 @@
       "id": 5,
       "type": "table",
       "title": "Tasks",
-      "description": "One row for each system task, sorted with the most overdue task first (highest late factor).\n\n* Runs on: the durable scheduler, a timer on the leader main, or a timer on every instance.\n* Last success: the most recent success on any main in the last 2 days. A restart does not reset it.\n* Late factor: last success age divided by the interval. 1 is normal. 2 or more means the task missed a run.\n* Runs and Failures: counts in the selected time range. A daily task often shows 0 runs, so read Last success first.\n\nBad when: a cell is red.",
+      "description": "One row for each system task, sorted with the most overdue task first (highest late factor).\n\n* Runs on: the durable scheduler, a timer on the leader main, or a timer on every instance.\n* Last success: the most recent success on any main in the last 2 days. A restart does not reset it.\n* Late factor: last success age divided by the interval, with the interval counted as at least 60 seconds. 1 is normal. 2 or more means the task missed a run.\n* Runs and Failures: counts in the selected time range. A daily task often shows 0 runs, so read Last success first.\n\nBad when: a cell is red.",
       "gridPos": {
         "x": 0,
         "y": 4,
@@ -334,7 +334,7 @@
         },
         {
           "refId": "D",
-          "expr": "((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) or on (task) ((max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) * 0 + 1000000000) or on (task) ((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) * 0 + 1000000000)",
+          "expr": "((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) / clamp_min(max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"}), 60)) or on (task) ((max by (task) (n8n_system_task_info{task=~\"$task\", instance=~\"$instance\"}) unless on (task) max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) * 0 + 1000000000) or on (task) ((((time() - max by (task) (max_over_time(n8n_system_task_last_success_timestamp_seconds{task=~\"$task\", instance=~\"$instance\"}[2d]))) > 172800) unless on (task) max by (task) (n8n_system_task_interval_seconds{task=~\"$task\", instance=~\"$instance\"})) * 0 + 1000000000)",
           "instant": true,
           "range": false,
           "format": "table"
