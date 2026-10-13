@@ -50,7 +50,7 @@ a window with enough samples.
 
 | Panel | Shows | Bad when |
 |-------|-------|----------|
-| Late Tasks | Tasks whose last success is older than two of their intervals, or that have no success in 2 days | Above zero |
+| Late Tasks | Tasks whose last success is older than two of their intervals (the interval counts as at least 60 seconds), or that have no success in 2 days | Above zero |
 | Unscheduled Tasks | Tasks that n8n could not schedule, and durable tasks whose stored job is disabled, quarantined or missing | Above zero. A timer task stays stopped until a main restarts: read the logs of the mains. For a durable task, check its row in `scheduled_job` |
 | Failed Runs | Failed runs in the selected time range | Above zero |
 | Tasks Reporting | System tasks that the mains report now | Lower than usual. A missing task is not monitored |
