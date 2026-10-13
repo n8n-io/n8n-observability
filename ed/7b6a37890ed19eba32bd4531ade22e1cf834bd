@@ -1,0 +1,21 @@
+dashboards/grafana/n8n-system-tasks/README.md
+  s_1422a9bd0c45df::t_fb1cc930ba98e1 53
+dashboards/grafana/n8n-system-tasks/n8n-system-tasks.json
+  s_1422a9bd0c45df::t_d111f89b55986e 78,302
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ed7b6a37890ed19eba32bd4531ade22e1cf834bd",
+  "prompts": {},
+  "sessions": {
+    "s_1422a9bd0c45df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4eff8999-e467-4b9b-bf07-604cb8061a73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Veljko Terzic <veljko.terzic@n8n.io>"
+    }
+  }
+}
